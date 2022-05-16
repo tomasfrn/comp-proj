@@ -23,6 +23,9 @@ void l22::xml_writer::do_and_node(cdk::and_node * const node, int lvl) {
 void l22::xml_writer::do_or_node(cdk::or_node * const node, int lvl) {
   // EMPTY
 }
+void l22::xml_writer::do_address_of_node(l22::address_of_node * const node, int lvl) {
+    // EMPTY
+}
 
 //---------------------------------------------------------------------------
 
