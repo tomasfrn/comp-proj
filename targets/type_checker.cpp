@@ -34,6 +34,9 @@ void l22::type_checker::do_or_node(cdk::or_node *const node, int lvl) {
 void l22::type_checker::do_address_of_node(l22::address_of_node *const node, int lvl) {
     // EMPTY
 }
+void l22::type_checker::do_sizeof_node(l22::sizeof_node *const node, int lvl) {
+    // EMPTY
+}
 //---------------------------------------------------------------------------
 
 void l22::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) {
