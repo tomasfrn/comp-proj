@@ -1,12 +1,10 @@
 #ifndef __L22_AST_SIZEOF_NODE_H__
 #define __L22_AST_SIZEOF_NODE_H__
 
-#include <cdk/ast/lvalue_node.h>
-
 namespace l22 {
 
   /**
-   * Class for describing evaluation nodes.
+   * Class for describing dimension of expression.
    */
 class sizeof_node: public cdk::basic_node {
     cdk::expression_node *_argument;

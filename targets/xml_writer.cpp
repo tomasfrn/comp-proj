@@ -29,6 +29,9 @@ void l22::xml_writer::do_address_of_node(l22::address_of_node * const node, int 
 void l22::xml_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
     // EMPTY
 }
+void l22::xml_writer::do_symmetrical_identity_node(l22::symmetrical_identity_node * const node, int lvl) {
+    // EMPTY
+}
 //---------------------------------------------------------------------------
 
 void l22::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {

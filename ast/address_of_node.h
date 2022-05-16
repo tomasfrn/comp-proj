@@ -6,7 +6,7 @@
 namespace l22 {
 
   /**
-   * Class for describing evaluation nodes.
+   * Class for describing the address of the left_value.
    */
 class address_of_node: public cdk::expression_node {
     cdk::lvalue_node *_argument;
