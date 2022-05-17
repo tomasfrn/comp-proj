@@ -30,10 +30,15 @@ void l22::postfix_writer::do_address_of_node(l22::address_of_node * const node, 
 void l22::postfix_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
     // EMPTY
 }
-void l22::postfix_writer::do_symmetrical_identity_node(l22::symmetrical_identity_node * const node, int lvl) {
+void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
     // EMPTY
 }
-
+void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
+    // EMPTY
+}
 //---------------------------------------------------------------------------
 
 void l22::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {

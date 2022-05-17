@@ -3,15 +3,16 @@
 
 namespace l22 {
 
+
   /**
    * Class for describing dimension of expression.
    */
-class sizeof_node: public cdk::basic_node {
+class sizeof_node: public cdk::expression_node {
     cdk::expression_node *_argument;
 
   public:
     inline sizeof_node(int lineno, cdk::expression_node *argument) :
-        cdk::basic_node(lineno), _argument(argument) {
+        cdk::expression_node(lineno), _argument(argument) {
     }
 
   public:
