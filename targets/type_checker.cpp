@@ -46,6 +46,28 @@ void l22::type_checker::do_return_node(l22::return_node *const node, int lvl) {
 void l22::type_checker::do_stop_node(l22::stop_node *const node, int lvl) {
     // EMPTY
 }
+void l22::type_checker::do_block_node(l22::block_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_function_call_node(l22::function_call_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_function_definition_node(l22::function_definition_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_index_node(l22::index_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_null_ptr_node(l22::null_ptr_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_stack_alloc_node(l22::stack_alloc_node * const node, int lvl) {
+    // EMPTY
+}
+void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
+    // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void l22::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) {
@@ -175,7 +197,7 @@ void l22::type_checker::do_evaluation_node(l22::evaluation_node *const node, int
   node->argument()->accept(this, lvl + 2);
 }
 
-void l22::type_checker::do_print_node(l22::print_node *const node, int lvl) {
+void l22::type_checker::do_write_node(l22::write_node *const node, int lvl) {
   node->argument()->accept(this, lvl + 2);
 }
 
