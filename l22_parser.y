@@ -68,8 +68,8 @@ stmt : expr ';'                         { $$ = new l22::evaluation_node(LINE, $1
  	   | tPRINT list ';'                  { $$ = new l22::write_node(LINE, $2); }
      | tREAD expr ';'                   { $$ = new l22::input_node(LINE, $2); }
      | tWHILE '(' expr ')' stmt         { $$ = new l22::while_node(LINE, $3, $5); }
-     // | tIF '(' expr ')' stmt %prec tIFX { $$ = new l22::if_node(LINE, $3, $5); }
-     // | tIF '(' expr ')' stmt tELSE stmt { $$ = new l22::if_else_node(LINE, $3, $5, $7); }
+     | tIF '(' expr ')' stmt %prec tIFX { $$ = new l22::if_node(LINE, $3, $5); }
+     | tIF '(' expr ')' stmt tELSE stmt { $$ = new l22::if_else_node(LINE, $3, $5, $7); }
      | '{' list '}'                     { $$ = $2; }
      ;
 

@@ -10,10 +10,10 @@ namespace l22 {
    */
   class if_node: public cdk::basic_node {
     cdk::expression_node *_condition;
-    l22::block_node *_block;
+    cdk::basic_node *_block;
 
   public:
-    inline if_node(int lineno, cdk::expression_node *condition, l22::block_node *block) :
+    inline if_node(int lineno, cdk::expression_node *condition, cdk::basic_node *block) :
         cdk::basic_node(lineno), _condition(condition), _block(block) {
     }
 
@@ -21,7 +21,7 @@ namespace l22 {
     inline cdk::expression_node *condition() {
       return _condition;
     }
-    inline l22::block_node *block() {
+    inline cdk::basic_node *block() {
       return _block;
     }
 

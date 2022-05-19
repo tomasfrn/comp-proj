@@ -10,7 +10,6 @@ namespace l22 {
    * Class for describing write nodes.
    */
   class write_node: public cdk::basic_node {
-      // TODO tem um sequence node e tenho que os percorre todos com um for no postfix (ver OG)
     cdk::sequence_node *_arguments;
     bool _newline = false;
   public:
