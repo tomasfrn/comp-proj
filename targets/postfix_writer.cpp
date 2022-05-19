@@ -243,24 +243,32 @@ void l22::postfix_writer::do_evaluation_node(l22::evaluation_node * const node, 
 }
 
 void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  node->argument()->accept(this, lvl); // determine the value to print
-  if (node->argument()->is_typed(cdk::TYPE_INT)) {
-    _pf.CALL("printi");
-    _pf.TRASH(4); // delete the printed value
-  } else if (node->argument()->is_typed(cdk::TYPE_STRING)) {
-    _pf.CALL("prints");
-    _pf.TRASH(4); // delete the printed value's address
-  } else {
-    std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-    exit(1);
-  }
-  _pf.CALL("println"); // print a newline
+    ASSERT_SAFE_EXPRESSIONS;
+    //node->arguments()->accept(this, lvl); // determine the value to print
+
+    for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
+        auto child = dynamic_cast<cdk::expression_node *>(node->arguments()->node(ix));
+
+        //node->newline();
+        std::shared_ptr<cdk::basic_type> etype = child->type();
+        child->accept(this, lvl);
+        if (child->is_typed(cdk::TYPE_INT)) {
+            _pf.CALL("printi");
+            _pf.TRASH(4); // delete the printed value
+        } else if (child->is_typed(cdk::TYPE_STRING)) {
+            _pf.CALL("prints");
+            _pf.TRASH(4); // delete the printed value's address
+        } else {
+            std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
+            exit(1);
+        }
+        _pf.CALL("println"); // print a newline
+    }
 }
 
 //---------------------------------------------------------------------------
 
-void l22::postfix_writer::do_read_node(l22::read_node * const node, int lvl) {
+void l22::postfix_writer::do_input_node(l22::input_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
   _pf.CALL("readi");
   _pf.LDFVAL32();

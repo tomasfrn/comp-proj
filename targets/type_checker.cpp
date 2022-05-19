@@ -198,12 +198,12 @@ void l22::type_checker::do_evaluation_node(l22::evaluation_node *const node, int
 }
 
 void l22::type_checker::do_write_node(l22::write_node *const node, int lvl) {
-  node->argument()->accept(this, lvl + 2);
+  node->arguments()->accept(this, lvl + 2);
 }
 
 //---------------------------------------------------------------------------
 
-void l22::type_checker::do_read_node(l22::read_node *const node, int lvl) {
+void l22::type_checker::do_input_node(l22::input_node *const node, int lvl) {
   try {
     node->argument()->accept(this, lvl);
   } catch (const std::string &id) {

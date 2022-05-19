@@ -10,16 +10,20 @@ namespace l22 {
    * Class for describing write nodes.
    */
   class write_node: public cdk::basic_node {
-    cdk::expression_node *_argument;
-
+      // TODO tem um sequence node e tenho que os percorre todos com um for no postfix (ver OG)
+    cdk::sequence_node *_arguments;
+    bool _newline = false;
   public:
-    inline write_node(int lineno, cdk::expression_node *argument) :
-        cdk::basic_node(lineno), _argument(argument) {
+    inline write_node(int lineno, cdk::sequence_node *arguments, bool newline = false) :
+        cdk::basic_node(lineno), _arguments(arguments), _newline(newline) {
     }
 
   public:
-    inline cdk::expression_node *argument() {
-      return _argument;
+    inline cdk::sequence_node *arguments() {
+      return _arguments;
+    }
+    inline bool newline() const {
+        return _newline;
     }
 
     void accept(basic_ast_visitor *sp, int level) {
