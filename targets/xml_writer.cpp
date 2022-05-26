@@ -59,7 +59,9 @@ void l22::xml_writer::do_stack_alloc_node(l22::stack_alloc_node * const node, in
 void l22::xml_writer::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
     // EMPTY
 }
-
+void l22::xml_writer::do_identity_node(l22::identity_node * const node, int lvl) {
+    // EMPTY
+}
 //---------------------------------------------------------------------------
 
 void l22::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {

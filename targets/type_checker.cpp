@@ -67,7 +67,9 @@ void l22::type_checker::do_stack_alloc_node(l22::stack_alloc_node * const node, 
 void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
     // EMPTY
 }
-
+void l22::type_checker::do_identity_node(l22::identity_node * const node, int lvl) {
+    // EMPTY
+}
 //---------------------------------------------------------------------------
 
 void l22::type_checker::do_integer_node(cdk::integer_node *const node, int lvl) {
