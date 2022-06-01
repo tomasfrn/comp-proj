@@ -1,21 +1,15 @@
-#ifndef __L22_AST_NEXT_H__
-#define __L22_AST_NEXT_H__
+#ifndef __L22_AST_AGAIN_H__
+#define __L22_AST_AGAIN_H__
 
 #include <cdk/ast/basic_node.h>
 
 namespace l22 {
 
     class again_node: public cdk::basic_node {
-        int _level;
 
     public:
-        again_node(int lineno, int level = 1) :
-                cdk::basic_node(lineno), _level(level) {
-        }
-
-    public:
-        int level() const {
-            return _level;
+        again_node(int lineno) :
+                cdk::basic_node(lineno)  {
         }
 
         void accept(basic_ast_visitor *sp, int level) {

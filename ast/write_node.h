@@ -4,8 +4,6 @@
 #include <cdk/ast/expression_node.h>
 
 namespace l22 {
-//TODO ver writeln
-
   /**
    * Class for describing write nodes.
    */
