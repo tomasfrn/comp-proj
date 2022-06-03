@@ -31,7 +31,14 @@
 /* ====[                                                            ]==== */
 /* ====================================================================== */
 
+"foreign"              return tFOREIGN;
+"use"                  return tUSE;
+"public"               return tPUBLIC;
+"var"                  return tVAR;
 
+"not"                  return tNOT; 
+"and"                  return '&'; 
+"or"                   return '|'; 
 
 /* ====================================================================== */
 /* ====[                                                            ]==== */
@@ -44,11 +51,21 @@
 
 "while"                return tWHILE; 
 "if"                   return tIF; 
+"then"                 return tTHEN; 
+"elif"                 return tELIF; 
 "else"                 return tELSE; 
 "print"                return tPRINT; 
 "read"                 return tREAD; 
 "begin"                return tBEGIN; 
 "end"                  return tEND; 
+
+"do"                   return tDO;
+"stop"                 return tSTOP;
+"again"                return tAGAIN;
+"return"               return tRETURN;
+
+"write"                return tWRITE;
+"writeln"              return tWRITELN;
 
 [A-Za-z][A-Za-z0-9_]*  yylval.s = new std::string(yytext); return tIDENTIFIER;
 
