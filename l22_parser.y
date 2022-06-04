@@ -33,6 +33,10 @@
   l22::block_node      *block;
 };
 
+//qualificadores
+%token tPUBLIC tFOREIGN tUSE tVAR
+%token tTYPE_INT tTYPE_DOUBLE tTYPE_STRING tTYPE_VOID tTYPE_POINTER
+
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tSTRING
 %token tWHILE tIF tPRINT tREAD tBEGIN tEND
@@ -46,24 +50,67 @@
 %left '*' '/' '%'
 %nonassoc tUNARY
 
-%type <node> stmt program
-%type <sequence> list
+// FIXME por os nos nos sitios certos
+%type <node> stmt program declaration
+%type <sequence> list file expressions declarations opt_declaration opt_instructions
 %type <expression> expr
 %type <lvalue> lval
-// %type <block> blk
+%type <block> blk
+
+// TODO verificar se funct_type esta bem aqui ou nao, nao faco ideia
+%type<type> data_type funct_type
 
 %{
 //-- The rules below will be included in yyparse, the main parsing function.
 %}
 %%
 
-program	: tBEGIN list tEND { compiler->ast(new l22::program_node(LINE, $2)); }
-	      ;
+file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
+     | declarations { compiler->ast($$ = $1); }
+     | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, NULL)); } //TODO está mal ver qual é o node
+     ;
 
+declarations :              declaration { $$ = new cdk::sequence_node(LINE, $1);     }
+             | declarations declaration { $$ = new cdk::sequence_node(LINE, $2, $1); }
+             ;
+// TODO - pode levar varias expressoes como declaracao de variavel?
+// TODO - no og havia o tuple declaration node para multiple variable declarations
+// TODO - este lval sozinho é suposto poder existir? não esta no og
+// TODO - fazer restantes casos
+declaration : lval 				{ $$ = $1;}
+	    | tPUBLIC data_type tIDENTIFIER '=' expr	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $5);}
+	    ;
+
+data_type    : tTYPE_STRING                     { $$ = cdk::primitive_type::create(4, cdk::TYPE_STRING);  }
+             | tTYPE_INT                        { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT);     }
+             | tTYPE_DOUBLE                     { $$ = cdk::primitive_type::create(8, cdk::TYPE_DOUBLE);  }
+// TODO verificar se o type_void pode ser aqui... wtf é um reference_type
+	     | tTYPE_VOID			{ $$ = cdk::primitive_type::create(0, cdk::TYPE_VOID);    }
+	     | tTYPE_POINTER '[' data_type ']'	{ $$ = cdk::reference_type::create(4, $3); 		  }
+
+// FIXME nao sei o que estou a fazer
+	     | funct_type			{ $$ = $1;}
+             ;
+
+
+// FIXME qual e o node que recebe um func type? nao pode ser o definition pq esse vai ser preciso qnd fizermos a func
+funct_type   : data_type 			{ $$ = cdk::functional_type::create($1);}
+//	     | data_type '<' data_type '>'	{ $$ = cdk::functional_type::create($3, $1); }
+	     ;
+
+
+expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
+                | expr ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+                ;
+
+program	: tBEGIN blk tEND { compiler->ast(new l22::program_node(LINE, $2)); }
+	      ;
+// TOMAS instructions
 list : stmt	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   | list stmt { $$ = new cdk::sequence_node(LINE, $2, $1); }
 	   ;
 
+// TOMAS instruction
 stmt : expr ';'                         { $$ = new l22::evaluation_node(LINE, $1); }
  	   | tPRINT list ';'                  { $$ = new l22::write_node(LINE, $2); }
      | tREAD expr ';'                   { $$ = new l22::input_node(LINE, $2); }
@@ -94,5 +141,15 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
      ;
+
+// FIXME grammar conflict
+opt_declaration : /* empty */ { $$ = NULL ;}
+		| declarations { $$ = $1;   }
+		;
+opt_instructions: /* empty */  { $$ = new cdk::sequence_node(LINE); }
+                | list { $$ = $1; }
+                ;
+blk : opt_declaration opt_instructions { $$ = new l22::block_node(LINE, $1, $2);}
+    ;
 
 %%
