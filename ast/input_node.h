@@ -8,19 +8,14 @@ namespace l22 {
   /**
    * Class for describing input nodes.
    */
-  class input_node: public cdk::basic_node {
-    cdk::expression_node *_argument;
+  class input_node: public cdk::expression_node {
 
   public:
-    inline input_node(int lineno, cdk::expression_node *argument) :
-        cdk::basic_node(lineno), _argument(argument) {
+    inline input_node(int lineno) :
+        cdk::expression_node(lineno){
     }
 
   public:
-    inline cdk::expression_node *argument() {
-      return _argument;
-    }
-
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_input_node(this, level);
     }

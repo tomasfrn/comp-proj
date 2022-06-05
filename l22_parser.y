@@ -33,17 +33,18 @@
   cdk::lvalue_node     *lvalue;
   l22::block_node      *block;
   cdk::typed_node      *typenode;
+  std::vector<std::shared_ptr<cdk::basic_type>>  *vector;
 
 };
 
 //qualificadores
 %token tPUBLIC tFOREIGN tUSE tVAR tPRIVATE
 %token tTYPE_STRING tTYPE_VOID /*tTYPE_POINTER*/
-
-%token <i> tTYPE_INT
+// TODO fazer o type integer e etc.. o tTYPE é só a descricao
+%token <i> tINTEGER
 %token <s> tIDENTIFIER tSTRING
-%token <d> tTYPE_DOUBLE
-%token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tNOT tSIZEOF
+%token <d> tDOUBLE
+%token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tNOT tSIZEOF tRETURNS tNULL tTYPE_INT tTYPE_DOUBLE
 
 %nonassoc tIFX
 %nonassoc tELSE
@@ -61,6 +62,8 @@
 %type <lvalue> lval
 %type <block> blk
 %type <typenode> funcdef
+%type <i> var
+%type <vector> data_types
 
 // TODO verificar se funct_type esta bem aqui ou nao, nao faco ideia
 %type<type> data_type funct_type
@@ -73,7 +76,7 @@
 file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
      | declarations { compiler->ast($$ = $1); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, NULL)); } //TODO está mal ver qual é o node
-            | program 		{ compiler->ast($$ = $1); }
+//  TODO          | program 		{ compiler->ast($$ = $1); }
      ;
 
 declarations :              vardeclaration { $$ = new cdk::sequence_node(LINE, $1);     }
@@ -88,11 +91,16 @@ opt_initializer  : /* empty */         { $$ = nullptr; /* must be nullptr, not N
 
 vardeclaration :	      data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3);}
 	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4);}
-	       | tPUBLIC tVAR 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, tVAR, *$3, $5);}
+	       // FIXME como por o var a funcionar? como obter informacoes sobre a expressao
+	       | tPUBLIC tVAR 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
 	       | tUSE    data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, $4);}
 	       // Ponteiro para funcao definida externamente
 	       | tFOREIGN data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, $4);}
 	       ;
+
+var            : tVAR         { $$ = tVAR; }
+               |              { $$ = '\0'; }
+               ;
 
 variables  : /* empty */         		{ $$ = new cdk::sequence_node(LINE);  }
 	   | vardeclaration			{ $$ = new cdk::sequence_node(LINE, $1);}
@@ -109,16 +117,20 @@ data_type    : tTYPE_STRING                     { $$ = cdk::primitive_type::crea
 	     | funct_type			{ $$ = $1;}
              ;
 
+data_types : /* vazio */                     { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); }
+           | data_type                       { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); $$->push_back($1); }
+           | data_types ',' data_type        { $$ = $1; $$->push_back($3); }
+
 
 funct_type   : data_type 			{ $$ = cdk::functional_type::create($1);}
-	     | data_type '<' data_type '>'	{ $$ = cdk::functional_type::create($3, $1); }
+	     | data_type '<' data_types '>'	{ $$ = cdk::functional_type::create(*$3, $1); }
 	     ;
-// FIXME mudar o func definition node
-funcdef      : '(' variables ')' '-' '>' data_type ':' blk { $$ = new l22::function_definition_node(LINE, NULL, NULL, $2, $8);}
+// FIXME mudar o func definition node. MUDAR SETA VEM DO PARSER
+funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, NULL, NULL, $2, $7);}
 	     ;
 
 expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
-                | expr ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+                | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
                 ;
 
 program	: tBEGIN blk tEND { compiler->ast(new l22::program_node(LINE, $2)); }
@@ -135,7 +147,6 @@ instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1
  	    | tAGAIN			{ $$ = new l22::again_node(LINE);}
  	    | tSTOP			{ $$ = new l22::stop_node(LINE);}
  	    | tRETURN expr		{ $$ = new l22::return_node(LINE, $2);}
-     	    | tINPUT expr ';'                   { $$ = new l22::input_node(LINE, $2); }
 
 	    | tIF '(' expr ')' tTHEN blk	{ $$ = new l22::if_node(LINE, $3, $6);}
 	    | tIF '(' expr ')' tTHEN blk bigif	{ $$ = new l22::if_else_node(LINE, $3, $6, $7);}
@@ -149,12 +160,12 @@ bigif      : tELSE blk                   { $$ = $2; }
             | tELIF '(' expr ')' tTHEN blk bigif   { $$ = new l22::if_else_node(LINE, $3, $6, $7); }
             ;
 
-expr : tTYPE_INT                { $$ = new cdk::integer_node(LINE, $1); }
-     | tTYPE_DOUBLE		{ $$ = new cdk::double_node(LINE, $1);  }
+expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
+     | tDOUBLE		{ $$ = new cdk::double_node(LINE, $1);  }
      | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
      | '-' expr %prec tUNARY   { $$ = new l22::identity_node(LINE, $2); }
-     | tNOT expr		{ $$ = new cdk:not_node(LINE, $2);}
+     | tNOT expr		{ $$ = new cdk::not_node(LINE, $2);}
      | expr '+' expr	        { $$ = new cdk::add_node(LINE, $1, $3); }
      | expr '-' expr	         { $$ = new cdk::sub_node(LINE, $1, $3); }
      | expr '*' expr	         { $$ = new cdk::mul_node(LINE, $1, $3); }
@@ -168,8 +179,9 @@ expr : tTYPE_INT                { $$ = new cdk::integer_node(LINE, $1); }
      | expr tEQ expr	         { $$ = new cdk::eq_node(LINE, $1, $3); }
      | expr '|' expr		{ $$ = new cdk::or_node(LINE, $1, $3);}
      | expr '&' expr		{ $$ = new cdk::and_node(LINE, $1, $3);}
+     | tNULL			{ $$ = new l22::null_ptr_node(LINE);}
      | tINPUT 			{ $$ = new l22::input_node(LINE);}
-     | tSIZEOF '(' expressions ')'	{ $$ = new l22::size_of(LINE, new cdk::sequence_node(LINE, $3);}
+     | tSIZEOF '(' expr ')'	{ $$ = new l22::sizeof_node(LINE, $3);}
      | '(' expr ')'            { $$ = $2; }
      | lval '?'		       { $$ = new l22::address_of_node(LINE, $1);	}
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME

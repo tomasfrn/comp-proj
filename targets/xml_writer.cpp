@@ -190,10 +190,10 @@ void l22::xml_writer::do_write_node(l22::write_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void l22::xml_writer::do_input_node(l22::input_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  openTag(node, lvl);
-  node->argument()->accept(this, lvl + 2);
-  closeTag(node, lvl);
+//  ASSERT_SAFE_EXPRESSIONS;
+//  openTag(node, lvl);
+//  node->argument()->accept(this, lvl + 2);
+//  closeTag(node, lvl);
 }
 
 //---------------------------------------------------------------------------

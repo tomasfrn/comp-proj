@@ -206,11 +206,11 @@ void l22::type_checker::do_write_node(l22::write_node *const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void l22::type_checker::do_input_node(l22::input_node *const node, int lvl) {
-  try {
-    node->argument()->accept(this, lvl);
-  } catch (const std::string &id) {
-    throw "undeclared variable '" + id + "'";
-  }
+//  try {
+//    node->argument()->accept(this, lvl);
+//  } catch (const std::string &id) {
+//    throw "undeclared variable '" + id + "'";
+//  }
 }
 
 //---------------------------------------------------------------------------

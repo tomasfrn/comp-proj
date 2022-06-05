@@ -272,11 +272,11 @@ void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void l22::postfix_writer::do_input_node(l22::input_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  _pf.CALL("readi");
-  _pf.LDFVAL32();
-  node->argument()->accept(this, lvl);
-  _pf.STINT();
+//  ASSERT_SAFE_EXPRESSIONS;
+//  _pf.CALL("readi");
+//  _pf.LDFVAL32();
+//  node->argument()->accept(this, lvl);
+//  _pf.STINT();
 }
 
 //---------------------------------------------------------------------------
