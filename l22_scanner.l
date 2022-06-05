@@ -3,10 +3,32 @@
 %{ 
 // make relevant includes before including the parser's tab file
 #include <string>
+#include <vector>
+#include <sstream>
 #include <cdk/ast/sequence_node.h>
 #include <cdk/ast/expression_node.h>
 #include <cdk/ast/lvalue_node.h>
 #include "l22_parser.tab.h"
+
+static bool restart_functions = false;
+
+static int lLevelsToPop = 0, lIndex = 0;
+static std::vector<int> indents;   // known indentation levels
+
+static std::ostringstream strlit;
+
+inline bool valid(int indent) {
+    lLevelsToPop = lIndex = -1;
+    bool indentOk = false;
+    for (size_t ix = 0; ix < indents.size(); ix++) {
+        if (indent == indents[ix]) {
+            lLevelsToPop = indents.size() - ix - 1;
+            lIndex = ix;
+            indentOk = true;
+        }
+    }
+    return indentOk;
+}
 
 // don't change this
 #define yyerror LexerError
@@ -103,9 +125,6 @@ SPACE     [ ]
 "foreign"              return tFOREIGN;
 "var"                  return tVAR;
 
-  /*------INDICACAO DE POSICAO------*/
-
-"?"                    return tPOS;
 
   /*------OPERADORES------*/ 
 
@@ -116,7 +135,6 @@ SPACE     [ ]
 "not"                  return tNOT; 
 "and"                  return '&'; 
 "or"                   return '|'; 
-"="                    return tATR;
 "->"                   return tRETURNS;
 
   /*------ITERACAO TERMINACAO CONTINUACAO------*/
@@ -192,7 +210,7 @@ SPACE     [ ]
 
   /*------REAIS------*/
 
-([0-9]*\.[0-9]+|[0-9]+\.[0-9])([Ee]([-+])?[0-9]+)? { yylval.d = strtod(yytext, NULL); return tREAL; }
+([0-9]*\.[0-9]+|[0-9]+\.[0-9])([Ee]([-+])?[0-9]+)? { yylval.d = strtod(yytext, NULL); return tDOUBLE; }
 
 
   /*------OUTROS------*/
