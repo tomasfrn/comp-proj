@@ -163,7 +163,7 @@ SPACE     [ ]
   /*------STRINGZORDS------*/
 
 "\""                   yy_push_state(X_STRING);
-<X_STRING>"~"          yy_push_state(X_SPECIALSTRING);
+<X_STRING>"\\"          yy_push_state(X_SPECIALSTRING);
 <X_STRING>"\""         {
   yylval.s = new std::string(strlit.str());
   strlit.str("");
@@ -176,7 +176,7 @@ SPACE     [ ]
 <X_SPECIALSTRING>r         strlit << '\r'; yy_pop_state();
 <X_SPECIALSTRING>t         strlit << '\t'; yy_pop_state();
 <X_SPECIALSTRING>"\""      strlit << '"'; yy_pop_state();
-<X_SPECIALSTRING>"\\"       strlit << '\'; yy_pop_state();
+<X_SPECIALSTRING>"\\"       strlit << '\\'; yy_pop_state();
 <X_SPECIALSTRING>[0-6]{1,3} {
   strlit << (char)(unsigned char)strtoul(yytext, NULL, 7);
   yy_pop_state();
