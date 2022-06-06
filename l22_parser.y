@@ -52,7 +52,7 @@
 %right '='
 %left tGE tLE tEQ tNE '>' '<'
 %left '+' '-'
-%left '*' '/' '%' '|' '&'
+%left '*' '/' '%' tAND tOR
 %nonassoc tUNARY
 
 // FIXME por os nos nos sitios certos
@@ -73,8 +73,8 @@
 %}
 %%
 
-file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
-     | declarations { compiler->ast($$ = $1); }
+//FIXME CONFLICT file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
+file: declarations { compiler->ast($$ = $1); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, NULL)); } //TODO está mal ver qual é o node
 //  TODO          | program 		{ compiler->ast($$ = $1); }
      ;
@@ -92,7 +92,7 @@ opt_initializer  : /* empty */         { $$ = nullptr; /* must be nullptr, not N
 vardeclaration :	      data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3);}
 	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4);}
 	       // FIXME como por o var a funcionar? como obter informacoes sobre a expressao
-	       | tPUBLIC tVAR 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
+	       | tPUBLIC var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
 	       | tUSE    data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, $4);}
 	       // Ponteiro para funcao definida externamente
 	       | tFOREIGN data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, $4);}
@@ -102,9 +102,9 @@ var            : tVAR         { $$ = tVAR; }
                |              { $$ = '\0'; }
                ;
 
-variables  : /* empty */         		{ $$ = new cdk::sequence_node(LINE);  }
+variables  : /* empty */         		{ $$ = nullptr;  }
 	   | vardeclaration			{ $$ = new cdk::sequence_node(LINE, $1);}
-	   | variables ',' vardeclaration	{ $$ new cdk::sequence_node(LINE, $3, $1);}
+	   | variables ',' vardeclaration	{ $$ = new cdk::sequence_node(LINE, $3, $1);}
 	   ;
 
 
@@ -122,11 +122,11 @@ data_types : /* vazio */                     { $$ = new std::vector<std::shared_
            | data_types ',' data_type        { $$ = $1; $$->push_back($3); }
 
 
-funct_type   : data_type 			{ $$ = cdk::functional_type::create($1);}
-	     | data_type '<' data_types '>'	{ $$ = cdk::functional_type::create(*$3, $1); }
+//FIXME CONFLICT funct_type   : data_type 			{ $$ = cdk::functional_type::create($1);}
+funct_type    : data_type '<' data_types '>'	{ $$ = cdk::functional_type::create(*$3, $1); }
 	     ;
 // FIXME mudar o func definition node. MUDAR SETA VEM DO PARSER
-funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, NULL, NULL, $2, $7);}
+funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, $2, $5, $7);}
 	     ;
 
 expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
@@ -152,7 +152,7 @@ instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1
 	    | tIF '(' expr ')' tTHEN blk bigif	{ $$ = new l22::if_else_node(LINE, $3, $6, $7);}
 
 	    | tWHILE '(' expr ')' tDO blk	{ $$ = new l22::while_node(LINE, $3, $6);}
-            | blk                     { $$ = $1; }
+// FIXME CONFLICT          | blk                     { $$ = $1; }
             ;
 
 bigif      : tELSE blk                   { $$ = $2; }
@@ -164,7 +164,7 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | tDOUBLE		{ $$ = new cdk::double_node(LINE, $1);  }
      | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
-     | '-' expr %prec tUNARY   { $$ = new l22::identity_node(LINE, $2); }
+     | '+' expr %prec tUNARY   { $$ = new l22::identity_node(LINE, $2); }
      | tNOT expr		{ $$ = new cdk::not_node(LINE, $2);}
      | expr '+' expr	        { $$ = new cdk::add_node(LINE, $1, $3); }
      | expr '-' expr	         { $$ = new cdk::sub_node(LINE, $1, $3); }
@@ -177,8 +177,8 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | expr tLE expr           { $$ = new cdk::le_node(LINE, $1, $3); }
      | expr tNE expr	         { $$ = new cdk::ne_node(LINE, $1, $3); }
      | expr tEQ expr	         { $$ = new cdk::eq_node(LINE, $1, $3); }
-     | expr '|' expr		{ $$ = new cdk::or_node(LINE, $1, $3);}
-     | expr '&' expr		{ $$ = new cdk::and_node(LINE, $1, $3);}
+     | expr tOR expr		{ $$ = new cdk::or_node(LINE, $1, $3);}
+     | expr tAND expr		{ $$ = new cdk::and_node(LINE, $1, $3);}
      | tNULL			{ $$ = new l22::null_ptr_node(LINE);}
      | tINPUT 			{ $$ = new l22::input_node(LINE);}
      | tSIZEOF '(' expr ')'	{ $$ = new l22::sizeof_node(LINE, $3);}
@@ -186,7 +186,8 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval '?'		       { $$ = new l22::address_of_node(LINE, $1);	}
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
-// TODO stack allocation node    |
+// FIXME    | funcdef			{$$ = $1;}
+// FIXME     | '[' tINTEGER ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
      ;
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
@@ -200,6 +201,7 @@ opt_instructions: /* empty */  { $$ = new cdk::sequence_node(LINE); }
                 | instructions { $$ = $1; }
                 ;
 blk : opt_declaration opt_instructions { $$ = new l22::block_node(LINE, $1, $2);}
+// FIXME ver os @    | '@' variables
     ;
 
 %%

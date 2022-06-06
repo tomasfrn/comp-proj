@@ -133,8 +133,8 @@ SPACE     [ ]
 "=="                   return tEQ; 
 "!="                   return tNE; 
 "not"                  return tNOT; 
-"and"                  return '&'; 
-"or"                   return '|'; 
+"and"                  return tAND;
+"or"                   return tOR;
 "->"                   return tRETURNS;
 
   /*------ITERACAO TERMINACAO CONTINUACAO------*/
