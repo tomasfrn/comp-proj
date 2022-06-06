@@ -72,30 +72,27 @@
 //-- The rules below will be included in yyparse, the main parsing function.
 %}
 %%
-
-//FIXME CONFLICT file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
-file: declarations { compiler->ast($$ = $1); }
-     | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, NULL)); } //TODO está mal ver qual é o node
-//  TODO          | program 		{ compiler->ast($$ = $1); }
+/*FIXME CONFLICT com o empty*/
+file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
+     | declarations { compiler->ast($$ = $1); }
+     | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, $2, $1)); }
      ;
 
 declarations :              vardeclaration { $$ = new cdk::sequence_node(LINE, $1);     }
              | declarations vardeclaration { $$ = new cdk::sequence_node(LINE, $2, $1); }
              ;
-// TODO - pode levar varias expressoes como declaracao de variavel?
-// TODO - no og havia o tuple declaration node para multiple variable declarations
 
 opt_initializer  : /* empty */         { $$ = nullptr; /* must be nullptr, not NIL */ }
                  | '=' expr      { $$ = $2; }
                  ;
 
-vardeclaration :	      data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3);}
-	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4);}
-	       // FIXME como por o var a funcionar? como obter informacoes sobre a expressao
-	       | tPUBLIC var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
+vardeclaration :	 data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3); delete $2;}
+	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4); delete $3; }
 	       | tUSE    data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, $4);}
-	       // Ponteiro para funcao definida externamente
 	       | tFOREIGN data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, $4);}
+	       | 	  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4); delete $2;}
+	       | tPUBLIC  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
+	       | tFOREIGN var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, nullptr, *$3, $5); delete $3;}
 	       ;
 
 var            : tVAR         { $$ = tVAR; }
@@ -112,7 +109,6 @@ data_type    : tTYPE_STRING                     { $$ = cdk::primitive_type::crea
              | tTYPE_INT                        { $$ = cdk::primitive_type::create(4, cdk::TYPE_INT);     }
              | tTYPE_DOUBLE                     { $$ = cdk::primitive_type::create(8, cdk::TYPE_DOUBLE);  }
 	     | tTYPE_VOID			{ $$ = cdk::primitive_type::create(0, cdk::TYPE_VOID);    }
-//	     | tTYPE_POINTER 			{ $$ = cdk::primitive_type::create(4, cdk::TYPE_POINTER); }
 	     | '[' data_type ']'		{ $$ = cdk::reference_type::create(4, $2); 		  }
 	     | funct_type			{ $$ = $1;}
              ;
@@ -122,10 +118,9 @@ data_types : /* vazio */                     { $$ = new std::vector<std::shared_
            | data_types ',' data_type        { $$ = $1; $$->push_back($3); }
 
 
-//FIXME CONFLICT funct_type   : data_type 			{ $$ = cdk::functional_type::create($1);}
 funct_type    : data_type '<' data_types '>'	{ $$ = cdk::functional_type::create(*$3, $1); }
 	     ;
-// FIXME mudar o func definition node. MUDAR SETA VEM DO PARSER
+
 funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, $2, $5, $7);}
 	     ;
 
@@ -187,7 +182,7 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
 // FIXME    | funcdef			{$$ = $1;}
-// FIXME     | '[' tINTEGER ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
+     | '[' expr ']' 		{ $$ = new l22::stack_alloc_node(LINE, $2);}
      ;
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
