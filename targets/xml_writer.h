@@ -3,6 +3,8 @@
 
 #include "targets/basic_ast_visitor.h"
 #include <cdk/ast/basic_node.h>
+#include <sstream>
+#include <stack>
 
 namespace l22 {
 
@@ -11,6 +13,18 @@ namespace l22 {
    */
   class xml_writer: public basic_ast_visitor {
     cdk::symbol_table<l22::symbol> &_symtab;
+
+    std::ostringstream  _namestream;
+        // TODO TOMAS
+      // semantic analysis
+      bool _errors, _inFunctionArgs, _inFunctionBody;
+      bool _inForInit;
+      bool _returnSeen; // when building a function
+      std::stack<int> _forIni, _forStep, _forEnd; // for break/repeat
+      std::stack<bool> _globals; // for deciding whether a variable is global or not
+      std::shared_ptr<l22::symbol> _function; // for keeping track of the current function and its arguments
+      int _offset; // current framepointer offset (0 means no vars defined)
+      cdk::typename_type _lvalueType;
 
   public:
     xml_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<l22::symbol> &symtab) :
@@ -21,6 +35,10 @@ namespace l22 {
     ~xml_writer() {
       os().flush();
     }
+  private:
+      void error(int lineno, std::string s) {
+          std::cerr << "error: " << lineno << ": " << s << std::endl;
+      }
 
   private:
     void openTag(const std::string &tag, int lvl) {
