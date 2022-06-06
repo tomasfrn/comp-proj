@@ -217,7 +217,7 @@ SPACE     [ ]
 
 [-()<>=+*/%;{}.]       return *yytext;
 
-[ \t\n]+               ; /* ignore whitespace */
+[ ]                /* ignore whitespace */
 
 .                      yyerror("Unknown character");
 
