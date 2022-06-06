@@ -11,40 +11,21 @@ namespace l22 {
     //!
     //! Class for describing function definitions.
     //! <pre>
-    //! declaration: type qualifier id '(' args ')' block
-    //!            {
-    //!              $$ = new l22::function_definition(LINE, $1, $2, $3, $5, $7);
-    //!            }
+    //! (cdk::sequence_node) -> type :
+    //!               $$ = new l22::block_node
     //! </pre>
     //!
-    //TODO a variavel é que tem um tipo
-    // so pomos um unico tipo na funcao
     class function_definition_node: public cdk::expression_node {
-        int _qualifier;
-        std::string _identifier;
         cdk::sequence_node *_arguments;
         l22::block_node *_block;
 
     public:
-        function_definition_node(int lineno, int qualifier, const std::string &identifier, cdk::sequence_node *arguments,
-                                 l22::block_node *block) :
-                cdk::expression_node(lineno), _qualifier(qualifier), _identifier(identifier), _arguments(arguments), _block(block) {
-            type(cdk::primitive_type::create(0, cdk::TYPE_VOID));
-        }
-
-        function_definition_node(int lineno, int qualifier, std::shared_ptr<cdk::basic_type> funType, const std::string &identifier,
-                                 cdk::sequence_node *arguments, l22::block_node *block) :
-                cdk::expression_node(lineno), _qualifier(qualifier), _identifier(identifier), _arguments(arguments), _block(block) {
+        function_definition_node(int lineno, cdk::sequence_node *arguments, std::shared_ptr<cdk::basic_type> funType , l22::block_node *block) :
+                cdk::expression_node(lineno), _arguments(arguments), _block(block) {
             type(funType);
         }
 
     public:
-        int qualifier() {
-            return _qualifier;
-        }
-        const std::string& identifier() const {
-            return _identifier;
-        }
         cdk::sequence_node* arguments() {
             return _arguments;
         }
