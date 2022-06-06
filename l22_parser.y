@@ -58,10 +58,11 @@
 // FIXME por os nos nos sitios certos
 %type <node> instruction program vardeclaration bigif
 %type <sequence> instructions file expressions declarations opt_declaration opt_instructions variables
-%type <expression> expr opt_initializer
+%type <expression> expr opt_initializer func_call funcdef
+
 %type <lvalue> lval
 %type <block> blk
-%type <typenode> funcdef
+//%type <typenode> funcdef
 %type <i> var
 %type <vector> data_types
 
@@ -76,6 +77,7 @@
 file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
      | declarations { compiler->ast($$ = $1); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, $2, $1)); }
+//     | program { compiler->ast($$ = $1); }
      ;
 
 declarations :              vardeclaration { $$ = new cdk::sequence_node(LINE, $1);     }
@@ -130,12 +132,11 @@ expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $
 
 program	: tBEGIN blk tEND { compiler->ast(new l22::program_node(LINE, $2)); }
 	      ;
-// TOMAS instructions
+
 instructions : instruction	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   | instructions instruction { $$ = new cdk::sequence_node(LINE, $2, $1); }
 	   ;
 
-// TOMAS instruction
 instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1); }
  	    | tWRITE expressions       	{ $$ = new l22::write_node(LINE, $2, false); }
  	    | tWRITELN expressions      { $$ = new l22::write_node(LINE, $2, true); }
@@ -181,11 +182,18 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval '?'		       { $$ = new l22::address_of_node(LINE, $1);	}
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
-// FIXME    | funcdef			{$$ = $1;}
-     | '[' expr ']' 		{ $$ = new l22::stack_alloc_node(LINE, $2);}
+     | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
+     | func_call		{ $$ = $1;}
+     | funcdef			{ $$ = $1;}
      ;
+// TODO faltam cenas
+func_call: tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
+	 | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
+// TODO isto tá certo? pq
+     | lval '[' expr ']'      { $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE, $1), $3); }
+
      ;
 
 // FIXME grammar conflict
@@ -196,7 +204,6 @@ opt_instructions: /* empty */  { $$ = new cdk::sequence_node(LINE); }
                 | instructions { $$ = $1; }
                 ;
 blk : opt_declaration opt_instructions { $$ = new l22::block_node(LINE, $1, $2);}
-// FIXME ver os @    | '@' variables
     ;
 
 %%

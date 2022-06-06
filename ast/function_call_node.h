@@ -17,34 +17,35 @@ namespace l22
 
 
     public:
-        function_call_node(int lineno, const std::string &identifier) : cdk::expression_node(lineno), _identifier(identifier), _expr(nullptr), _arguments(new cdk::sequence_node(lineno)){
+        // i
+        function_call_node(int lineno, const std::string &identifier) :
+            cdk::expression_node(lineno), _identifier(identifier), _expr(nullptr), _arguments(new cdk::sequence_node(lineno)){
         }
-
-        function_call_node(int lineno, const std::string &identifier, cdk::sequence_node *arguments) : cdk::expression_node(lineno), _identifier(identifier), _expr(nullptr), _arguments(arguments){
+        // i + 1
+        function_call_node(int lineno, const std::string &identifier, cdk::sequence_node *arguments) :
+            cdk::expression_node(lineno), _identifier(identifier), _expr(nullptr), _arguments(arguments){
         }
-
-        function_call_node(int lineno, cdk::expression_node *expr) : cdk::expression_node(lineno), _identifier(""), _expr(expr), _arguments(new cdk::sequence_node(lineno)){
+        // 1
+        function_call_node(int lineno, cdk::expression_node *expr) :
+            cdk::expression_node(lineno), _identifier(""), _expr(expr), _arguments(new cdk::sequence_node(lineno)){
         }
-
-        function_call_node(int lineno, cdk::expression_node *expr, cdk::sequence_node *arguments) : cdk::expression_node(lineno), _identifier(""), _expr(expr), _arguments(arguments){
+        // 1 + 1
+        function_call_node(int lineno, cdk::expression_node *expr, cdk::sequence_node *arguments) :
+            cdk::expression_node(lineno), _identifier(""), _expr(expr), _arguments(arguments){
         }
 
     public:
-        const std::string &identifier()
-        {
+        const std::string &identifier(){
             return _identifier;
         }
-        cdk::sequence_node *arguments()
-        {
+        cdk::sequence_node *arguments(){
             return _arguments;
         }
-        cdk::expression_node *expr()
-        {
+        cdk::expression_node *expr(){
             return _expr;
         }
 
-        void accept(basic_ast_visitor *sp, int level)
-        {
+        void accept(basic_ast_visitor *sp, int level){
             sp->do_function_call_node(this, level);
         }
     };
