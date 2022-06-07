@@ -44,12 +44,12 @@
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tSTRING
 %token <d> tDOUBLE
-%token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tNOT tSIZEOF tRETURNS tNULL tTYPE_INT tTYPE_DOUBLE
+%token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tSIZEOF tRETURNS tNULL tTYPE_INT tTYPE_DOUBLE
 
 %nonassoc tIFX
 %nonassoc tELSE
 
-%right '='
+%right '=' tNOT
 %left tGE tLE tEQ tNE '>' '<'
 %left '+' '-'
 %left '*' '/' '%' tAND tOR
@@ -57,13 +57,14 @@
 
 // FIXME por os nos nos sitios certos
 %type <node> instruction program vardeclaration bigif
-%type <sequence> instructions file expressions declarations opt_declaration opt_instructions variables
-%type <expression> expr opt_initializer func_call funcdef
+%type <sequence> instructions file expressions declarations /*opt_declaration*/ opt_instructions variables
+%type <expression> expr opt_initializer /*func_call*/ funcdef
 
 %type <lvalue> lval
 %type <block> blk
 //%type <typenode> funcdef
 %type <i> var
+%type <s> string
 %type <vector> data_types
 
 // TODO verificar se funct_type esta bem aqui ou nao, nao faco ideia
@@ -75,7 +76,7 @@
 %%
 /*FIXME CONFLICT com o empty*/
 file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
-//     | declarations { compiler->ast($$ = new cdk::sequence_node(LINE, $1)); }
+     | declarations { compiler->ast($$ = new cdk::sequence_node(LINE, $1)); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, $2, $1)); }
      | program { compiler->ast($$ = new cdk::sequence_node(LINE,$1)); }
      ;
@@ -95,11 +96,11 @@ opt_initializer  : /* empty */         { $$ = nullptr; /* must be nullptr, not N
 
 vardeclaration :	 data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3); delete $2;}
 	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4); delete $3; }
-	       | tUSE    data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, $4);}
-	       | tFOREIGN data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, $4);}
+	       | tUSE    data_type tIDENTIFIER 	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, nullptr); delete $3;}
+	       | tFOREIGN data_type tIDENTIFIER 	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, nullptr); delete $3;}
 	       | 	  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4); delete $2;}
 	       | tPUBLIC  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
-	       | tFOREIGN var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, nullptr, *$3, $5); delete $3;}
+//	       | tFOREIGN var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, nullptr, *$3, $5); delete $3;}
 	       ;
 // TODO
 var            : tVAR         { $$ = tVAR; }
@@ -133,6 +134,7 @@ funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::func
 
 expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
                 | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+     		| 				{ $$ = new cdk::sequence_node(LINE);}
                 ;
 
 
@@ -153,7 +155,7 @@ instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1
 	    | tIF '(' expr ')' tTHEN blk bigif	{ $$ = new l22::if_else_node(LINE, $3, $6, $7);}
 
 	    | tWHILE '(' expr ')' tDO blk	{ $$ = new l22::while_node(LINE, $3, $6);}
-// FIXME CONFLICT          | blk                     { $$ = $1; }
+	    | blk                     { $$ = $1; }
             ;
 
 bigif      : tELSE blk                   { $$ = $2; }
@@ -161,9 +163,13 @@ bigif      : tELSE blk                   { $$ = $2; }
             | tELIF '(' expr ')' tTHEN blk bigif   { $$ = new l22::if_else_node(LINE, $3, $6, $7); }
             ;
 
+string          : tSTRING                       { $$ = $1; }
+                | string tSTRING                { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
+                ;
+
 expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | tDOUBLE		{ $$ = new cdk::double_node(LINE, $1);  }
-     | tSTRING                 { $$ = new cdk::string_node(LINE, $1); }
+     | string                 { $$ = new cdk::string_node(LINE, $1); }
      | '-' expr %prec tUNARY   { $$ = new cdk::neg_node(LINE, $2); }
      | '+' expr %prec tUNARY   { $$ = new l22::identity_node(LINE, $2); }
      | tNOT expr		{ $$ = new cdk::not_node(LINE, $2);}
@@ -183,34 +189,37 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | tNULL			{ $$ = new l22::null_ptr_node(LINE);}
      | tINPUT 			{ $$ = new l22::input_node(LINE);}
      | tSIZEOF '(' expr ')'	{ $$ = new l22::sizeof_node(LINE, $3);}
+     | funcdef			{ $$ = $1;}
      | '(' expr ')'            { $$ = $2; }
+//     | func_call		{ $$ = $1;}
      | lval '?'		       { $$ = new l22::address_of_node(LINE, $1);	}
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }  //FIXME
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
      | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
-     | func_call		{ $$ = $1;}
-     | funcdef			{ $$ = $1;}
+     | expr '(' expressions ')' { $$ = new l22::function_call_node(LINE, $1, $3);}
+     | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
 //     | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
      ;
 // TODO faltam cenas
-func_call: tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
-	 | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
+//func_call: tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
+//	 | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
-// TODO isto tá certo? pq
      | lval '[' expr ']'      { $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE, $1), $3); }
 //     | '@' variable node
      ;
 
 // FIXME grammar conflict
-opt_declaration : /* empty */ { $$ = NULL ;}
-		| declarations { $$ = $1;   }
-		;
+// dentro do bloco nao pode haver qualifiers
+//opt_declaration : /* empty */ { $$ = NULL ;}
+//		| declarations { $$ = $1;   }
+//		;
 opt_instructions: /* empty */  { $$ = new cdk::sequence_node(LINE); }
                 | instructions { $$ = $1; }
                 ;
-                // todo chgavetas
-blk : '{' opt_declaration opt_instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
+
+blk :	'{' opt_instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
+    |	 '{' declarations opt_instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
     ;
 
 %%

@@ -215,7 +215,7 @@ SPACE     [ ]
 
   /*------OUTROS------*/
 
-[-()<>=+*/%;{}.]       return *yytext;
+[-?()<>=+*/%;:{},@.\[\]]       return *yytext;
 
 [ ]                /* ignore whitespace */
 
