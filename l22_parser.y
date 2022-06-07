@@ -57,8 +57,8 @@
 
 // FIXME por os nos nos sitios certos
 %type <node> instruction program vardeclaration bigif
-%type <sequence> instructions file expressions declarations /*opt_declaration*/ opt_instructions variables
-%type <expression> expr opt_initializer /*func_call*/ funcdef
+%type <sequence> instructions file expressions declarations variables
+%type <expression> expr opt_initializer funcdef
 
 %type <lvalue> lval
 %type <block> blk
@@ -198,7 +198,6 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
      | expr '(' expressions ')' { $$ = new l22::function_call_node(LINE, $1, $3);}
      | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
-//     | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
      ;
 // TODO faltam cenas
 //func_call: tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
@@ -206,20 +205,12 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
      | lval '[' expr ']'      { $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE, $1), $3); }
-//     | '@' variable node
      ;
 
-// FIXME grammar conflict
-// dentro do bloco nao pode haver qualifiers
-//opt_declaration : /* empty */ { $$ = NULL ;}
-//		| declarations { $$ = $1;   }
-//		;
-opt_instructions: /* empty */  { $$ = new cdk::sequence_node(LINE); }
-                | instructions { $$ = $1; }
-                ;
-
-blk :	'{' opt_instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
-    |	 '{' declarations opt_instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
+blk :	'{' instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
+    |	 '{' declarations instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
+    | '{' declarations '}' 	{ $$ = new l22::block_node(LINE, $2, nullptr);}
+    | '{' '}' 			{ $$ = new l22::block_node(LINE, nullptr, nullptr);}
     ;
 
 %%
