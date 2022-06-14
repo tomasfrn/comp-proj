@@ -186,7 +186,7 @@ SPACE     [ ]
   yylval.s = new std::string(strlit.str());
   strlit.str("");
   yy_pop_state();
-  return tSTRING;
+  return tTEXT;
 }
 <X_STRING>.            strlit << *yytext;
 
@@ -218,6 +218,8 @@ SPACE     [ ]
 [-?()<>=+*/%;:{},@.\[\]]       return *yytext;
 
 [ ]                /* ignore whitespace */
+
+<<EOF>>               return 0;
 
 .                      yyerror("Unknown character");
 

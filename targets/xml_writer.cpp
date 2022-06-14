@@ -1,13 +1,14 @@
 #include <string>
 #include "targets/xml_writer.h"
 #include "targets/type_checker.h"
-// TODO TOMAS #include <cdk/types/types.h>
 #include ".auto/all_nodes.h"  // automatically generated
 #include "l22_parser.tab.h"
 
 
 static std::string qualifier_name(int qualifier) {
     if (qualifier == tPUBLIC) return "public";
+    if (qualifier == tFOREIGN) return "foreign";
+    if (qualifier == tUSE) return "use";
     if (qualifier == tPRIVATE)
         return "private";
     else
@@ -70,35 +71,26 @@ void l22::xml_writer::do_function_call_node(l22::function_call_node * const node
     closeTag(node, lvl);
 }
 void l22::xml_writer::do_function_definition_node(l22::function_definition_node * const node, int lvl) {
-    // TODO TOMAS
-    if (_inFunctionBody || _inFunctionArgs) {
-        error(node->lineno(), "cannot define function in body or in args");
-        return;
-    }
-
-    //DAVID: FIXME: should be at the beginning
 
     // remember symbol so that args and body know
     _function = new_symbol();
     reset_new_symbol();
 
     _inFunctionBody = true;
-    _symtab.push(); // scope of args
+    if (node->block())
+        _symtab.push(); // scope of args
 
     os() << std::string(lvl, ' ') << "<" << node->label() << "' type='" << cdk::to_string(node->type()) << "'>" << std::endl;
 
     openTag("arguments", lvl);
-//    if (node->arguments()) {
-//        _inFunctionArgs = true; //FIXME really needed?
-//        node->arguments()->accept(this, lvl + 4);
-//        _inFunctionArgs = false; //FIXME really needed?
-//    }
+    if (node->arguments()) {
+        node->arguments()->accept(this, lvl + 4);
+    }
     closeTag("arguments", lvl);
     node->block()->accept(this, lvl + 2);
     closeTag(node, lvl);
 
     _symtab.pop(); // scope of args
-    _inFunctionBody = false;
 }
 void l22::xml_writer::do_index_node(l22::index_node * const node, int lvl) {
     openTag(node, lvl);
@@ -126,6 +118,10 @@ void l22::xml_writer::do_variable_declaration_node(l22::variable_declaration_nod
         os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "' qualifier='"
              << qualifier_name(node->qualifier()) << "' type='" << cdk::to_string(node->type()) << "'>" << std::endl;
     }
+    if (node->type() == nullptr) {
+        os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "' qualifier='"
+             << qualifier_name(node->qualifier()) << "' type=null'" << "'>" << std::endl;
+    }
     if (node->initializer()) {
         openTag("initializer", lvl);
         node->initializer()->accept(this, lvl + 4);
@@ -144,7 +140,8 @@ void l22::xml_writer::do_sequence_node(cdk::sequence_node * const node, int lvl)
   closeTag(node, lvl);
 }
 void l22::xml_writer::do_data_node(cdk::data_node * const node, int lvl) {
-    // EMPTY
+    os() << std::string(lvl, ' ') << "<data_node size='" << node->size() << "'>" << std::endl;
+
 }
 void l22::xml_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
     openTag(node, lvl);
@@ -275,9 +272,6 @@ void l22::xml_writer::do_write_node(l22::write_node * const node, int lvl) {
 
 void l22::xml_writer::do_input_node(l22::input_node * const node, int lvl) {
 //  ASSERT_SAFE_EXPRESSIONS;
-//  openTag(node, lvl);
-//  node->argument()->accept(this, lvl + 2);
-//  closeTag(node, lvl);
     openTag(node, lvl);
     closeTag(node, lvl);
 }
