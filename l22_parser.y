@@ -187,8 +187,8 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
      | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
-     | expr '(' expressions ')' { $$ = new l22::function_call_node(LINE, $1, $3);}
-     | '@' '(' expr ')'	   { $$ = new l22::function_call_node(LINE, $3);}
+     | tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
+     | '@' '(' expressions ')'	   { $$ = new l22::function_call_node(LINE, nullptr, $3);}
      ;
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
