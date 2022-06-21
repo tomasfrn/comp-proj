@@ -9,60 +9,131 @@
 void l22::postfix_writer::do_nil_node(cdk::nil_node * const node, int lvl) {
   // EMPTY
 }
+
 void l22::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
   // EMPTY
 }
+
 void l22::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
-  // EMPTY
+  if (_inFunctionBody) {
+    _pf.DOUBLE(node->value()); // load number to the stack
+  } else {
+    _pf.SDOUBLE(node->value());    // double is on the DATA segment
+  }
 }
+
 void l22::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+    node->argument()->accept(this, lvl); //lvl +2 ?
+    _pf.INT(0);
+    _pf.EQ();
 }
+
 void l22::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  int lbl = ++_lbl;
+  node->left()->accept(this, lvl);
+  _pf.DUP32();
+  _pf.JZ(mklbl(lbl));
+  node->right()->accept(this, lvl);
+  _pf.AND();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl));
 }
+
 void l22::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
-  // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  int lbl = ++_lbl;
+  node->left()->accept(this, lvl);
+  _pf.DUP32();
+  _pf.JNZ(mklbl(lbl));
+  node->right()->accept(this, lvl);
+  _pf.OR();
+  _pf.ALIGN();
+  _pf.LABEL(mklbl(lbl));
 }
+
 void l22::postfix_writer::do_address_of_node(l22::address_of_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS
+  node->lvalue()->accept(this, lvl);
 }
+
 void l22::postfix_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
     // EMPTY
 }
+
 void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
-    // EMPTY
+  if(_forStep.size() > 0) //so dentro de um for??
+  _pf.JMP(mklbl(_forStep.top()));
+  else
+    std::cerr << "again instruction can only be used inside a for cycle." << std::endl;
 }
+
 void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl) {
     // EMPTY
 }
+
 void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
-    // EMPTY
+  if(_forEnd.size() > 0)  //so dentro de um for??
+    _pf.JMP(mklbl(_forEnd.top()));
+  else
+    std::cerr << "stop instruction can only be used inside a for cycle." << std::endl;
 }
+
 void l22::postfix_writer::do_block_node(l22::block_node * const node, int lvl) {
-    // EMPTY
+  //_symtab.push(); // for block-local vars SIM OU NAO?
+  if (node->declarations()) node->declarations()->accept(this, lvl + 2);
+  if (node->instructions()) node->instructions()->accept(this, lvl + 2);
+  //_symtab.pop();
 }
+
 void l22::postfix_writer::do_function_call_node(l22::function_call_node * const node, int lvl) {
     // EMPTY
 }
+
 void l22::postfix_writer::do_function_definition_node(l22::function_definition_node * const node, int lvl) {
     // EMPTY
 }
+
 void l22::postfix_writer::do_index_node(l22::index_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS; //será?? nao faco idea
+  if (node->base()) {
+    node->base()->accept(this, lvl);
+  } else {
+    if (_function) {
+      _pf.LOCV(-_function->type()->size());
+    } else {
+      std::cerr << "FATAL: " << node->lineno() << ": trying to use return value outside function" << std::endl;
+    }
+  }
+  node->index()->accept(this, lvl);
+  _pf.INT(3);
+  _pf.SHTL();
+  _pf.ADD(); // add pointer and index 
 }
+
 void l22::postfix_writer::do_null_ptr_node(l22::null_ptr_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS; //talvez nao seja pq diferente no enunciado
+  if (_inFunctionBody) {
+    _pf.INT(0);
+  } else {
+    _pf.SINT(0);
+  }
 }
+
 void l22::postfix_writer::do_stack_alloc_node(l22::stack_alloc_node * const node, int lvl) {
     // EMPTY
 }
+
 void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
-    // EMPTY
+    // EMPTY meu deuz
 }
+
 void l22::postfix_writer::do_identity_node(l22::identity_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl);
 }
+
 //---------------------------------------------------------------------------
 
 void l22::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int lvl) {
