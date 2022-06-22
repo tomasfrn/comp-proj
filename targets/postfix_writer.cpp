@@ -55,11 +55,12 @@ void l22::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
 
 void l22::postfix_writer::do_address_of_node(l22::address_of_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS
-  node->lvalue()->accept(this, lvl);
+  node->argument()->accept(this, lvl);
 }
 
 void l22::postfix_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS //copiei de cima pq parece a mma vibe
+  node->argument()->accept(this, lvl);
 }
 
 void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
@@ -70,7 +71,7 @@ void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
 }
 
 void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl) {
-    // EMPTY
+    //EMPTY
 }
 
 void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
@@ -122,7 +123,16 @@ void l22::postfix_writer::do_null_ptr_node(l22::null_ptr_node * const node, int 
 }
 
 void l22::postfix_writer::do_stack_alloc_node(l22::stack_alloc_node * const node, int lvl) {
-    // EMPTY
+  ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl);
+  if(cdk::reference_type::cast(node->type())->referenced()->name() == cdk::TYPE_DOUBLE)
+    _pf.INT(3);
+  else
+    _pf.INT(2);
+
+  _pf.SHTL();
+  _pf.ALLOC();    
+  _pf.SP();
 }
 
 void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {

@@ -2,7 +2,7 @@
 #define __L22_TARGETS_POSTFIX_WRITER_H__
 
 #include "targets/basic_ast_visitor.h"
-
+#include <stack>
 #include <sstream>
 #include <cdk/emitters/basic_postfix_emitter.h>
 
@@ -15,6 +15,11 @@ namespace l22 {
     cdk::symbol_table<l22::symbol> &_symtab;
     cdk::basic_postfix_emitter &_pf;
     int _lbl;
+    std::stack<int> _forIni, _forStep, _forEnd; // for break/repeat
+    bool _inFunctionBody = false;
+    bool _inFunctionArgs = false;
+    std::shared_ptr<l22::symbol> _function;
+
 
   public:
     postfix_writer(std::shared_ptr<cdk::compiler> compiler, cdk::symbol_table<l22::symbol> &symtab,
