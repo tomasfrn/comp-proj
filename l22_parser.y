@@ -43,6 +43,8 @@
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tTEXT
 %token <d> tDOUBLE
+%token <expression> tIDENTIFIERFUNCTION
+
 %token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tSIZEOF tRETURNS tNULL tTYPE_INT tTYPE_DOUBLE
 
 %nonassoc tIFX
@@ -187,8 +189,8 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
      | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
-     | tIDENTIFIER '(' expressions ')' { $$ = new l22::function_call_node(LINE, *$1, $3);}
-     | '@' '(' expressions ')'	   { $$ = new l22::function_call_node(LINE, $3);}
+     | tIDENTIFIERFUNCTION  expressions ')' { $$ = new l22::function_call_node(LINE, $1, $2);}
+//     |  expressions ')'	   { $$ = new l22::function_call_node(LINE, $3);}
      // TODO checkar isto
 //     | funcdef '(' expressions ')' {$$ = new l22::function_call_node(LINE, $3);}
      ;
