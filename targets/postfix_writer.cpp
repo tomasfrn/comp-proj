@@ -75,7 +75,7 @@ void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl)
 }
 
 void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
-  /* if(_forEnd.size() > 0)  //so dentro de um for??
+  /* if(_forEnd.size() > 0) 
     _pf.JMP(mklbl(_forEnd.top()));
   else
     std::cerr << "stop instruction can only be used inside a for cycle." << std::endl; */
@@ -329,7 +329,7 @@ void l22::postfix_writer::do_evaluation_node(l22::evaluation_node * const node, 
 void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 
-  std::cout << "            ENTORU           " << std::endl;
+  std::cout << "            ENTROU           " << std::endl;
 
   for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
     cdk::expression_node *child = dynamic_cast<cdk::expression_node*>(node->arguments()->node(ix));
@@ -341,8 +341,8 @@ void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
 
     child->accept(this, lvl); // expression to print
         std::cout << "            ENTORU foriculo      3     " << std::endl;
-    if (child->type() == 0)
-      std::cout << "        yau         " << std::endl;
+    if (child->type() == 0) //ta null
+      std::cout << "        yau ta nullzord       " << std::endl;
 
     if (etype->name() == cdk::TYPE_INT) {
       std::cout << "entrou inteiro" << std::endl;
@@ -360,7 +360,7 @@ void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
       _pf.CALL("prints");
       _pf.TRASH(4); // trash char pointer
     } else {
-        std::cout << "            ENTrou else         " << std::endl;
+        std::cout << "            ENTROU else         " << std::endl;
       std::cerr << "cannot print expression of unknown type" << std::endl;
       return;
     }

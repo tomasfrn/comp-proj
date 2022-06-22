@@ -262,7 +262,7 @@ void l22::xml_writer::do_evaluation_node(l22::evaluation_node * const node, int 
 }
 
 void l22::xml_writer::do_write_node(l22::write_node * const node, int lvl) {
-//  ASSERT_SAFE_EXPRESSIONS;
+  ASSERT_SAFE_EXPRESSIONS;
   openTag(node, lvl);
   node->arguments()->accept(this, lvl + 2);
   closeTag(node, lvl);
