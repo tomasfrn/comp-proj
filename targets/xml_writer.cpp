@@ -64,7 +64,7 @@ void l22::xml_writer::do_block_node(l22::block_node * const node, int lvl) {
     closeTag(node, lvl);
 }
 void l22::xml_writer::do_function_call_node(l22::function_call_node * const node, int lvl) {
-    os() << std::string(lvl, ' ') << "<" << node->label() << " name='" << node->identifier() << "'>" << std::endl;
+    os() << std::string(lvl, ' ') << "<" << node->label() << std::endl;
     openTag("arguments", lvl);
     if (node->arguments()) node->arguments()->accept(this, lvl + 4);
     closeTag("arguments", lvl);

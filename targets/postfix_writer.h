@@ -3,6 +3,7 @@
 
 #include "targets/basic_ast_visitor.h"
 #include <stack>
+#include <set>
 #include <sstream>
 #include <cdk/emitters/basic_postfix_emitter.h>
 
@@ -19,6 +20,8 @@ namespace l22 {
     bool _inFunctionBody = false;
     bool _inFunctionArgs = false;
     std::shared_ptr<l22::symbol> _function;
+    std::set<std::string> _functions_to_declare;
+
 
 
   public:

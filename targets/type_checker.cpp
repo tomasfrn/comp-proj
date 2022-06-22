@@ -200,7 +200,16 @@ void l22::type_checker::do_evaluation_node(l22::evaluation_node *const node, int
 }
 
 void l22::type_checker::do_write_node(l22::write_node *const node, int lvl) {
-  node->arguments()->accept(this, lvl + 2);
+    node->arguments()->accept(this, lvl + 2);
+
+    for(size_t i = 0; i < node->arguments()->size(); i++) {
+      cdk::expression_node *expression = dynamic_cast<cdk::expression_node *>(node->arguments()->node(i));
+      std::cout << expression->type() << std::endl;
+      if (expression->type() != nullptr && expression->is_typed(cdk::TYPE_VOID)){
+          throw std::string("Wrong type in write argument.");
+      }
+
+    }
 }
 
 //---------------------------------------------------------------------------

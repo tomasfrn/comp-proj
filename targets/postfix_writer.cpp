@@ -15,11 +15,11 @@ void l22::postfix_writer::do_data_node(cdk::data_node * const node, int lvl) {
 }
 
 void l22::postfix_writer::do_double_node(cdk::double_node * const node, int lvl) {
-  if (_inFunctionBody) {
+  /* if (_inFunctionBody) {
     _pf.DOUBLE(node->value()); // load number to the stack
   } else {
     _pf.SDOUBLE(node->value());    // double is on the DATA segment
-  }
+  } */
 }
 
 void l22::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
@@ -30,7 +30,7 @@ void l22::postfix_writer::do_not_node(cdk::not_node * const node, int lvl) {
 }
 
 void l22::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
+  /* ASSERT_SAFE_EXPRESSIONS;
   int lbl = ++_lbl;
   node->left()->accept(this, lvl);
   _pf.DUP32();
@@ -38,11 +38,11 @@ void l22::postfix_writer::do_and_node(cdk::and_node * const node, int lvl) {
   node->right()->accept(this, lvl);
   _pf.AND();
   _pf.ALIGN();
-  _pf.LABEL(mklbl(lbl));
+  _pf.LABEL(mklbl(lbl)); */
 }
 
 void l22::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
+  /* ASSERT_SAFE_EXPRESSIONS;
   int lbl = ++_lbl;
   node->left()->accept(this, lvl);
   _pf.DUP32();
@@ -50,24 +50,24 @@ void l22::postfix_writer::do_or_node(cdk::or_node * const node, int lvl) {
   node->right()->accept(this, lvl);
   _pf.OR();
   _pf.ALIGN();
-  _pf.LABEL(mklbl(lbl));
+  _pf.LABEL(mklbl(lbl)); */
 }
 
 void l22::postfix_writer::do_address_of_node(l22::address_of_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS
-  node->argument()->accept(this, lvl);
+  /* ASSERT_SAFE_EXPRESSIONS
+  node->argument()->accept(this, lvl); */
 }
 
 void l22::postfix_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS //copiei de cima pq parece a mma vibe
-  node->argument()->accept(this, lvl);
+  /* ASSERT_SAFE_EXPRESSIONS //copiei de cima pq parece a mma vibe
+  node->argument()->accept(this, lvl); */
 }
 
 void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
-  if(_forStep.size() > 0) //so dentro de um for??
+  /* if(_forStep.size() > 0) //so dentro de um for??
   _pf.JMP(mklbl(_forStep.top()));
   else
-    std::cerr << "again instruction can only be used inside a for cycle." << std::endl;
+    std::cerr << "again instruction can only be used inside a for cycle." << std::endl; */
 }
 
 void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl) {
@@ -75,10 +75,10 @@ void l22::postfix_writer::do_return_node(l22::return_node * const node, int lvl)
 }
 
 void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
-  if(_forEnd.size() > 0)  //so dentro de um for??
+  /* if(_forEnd.size() > 0)  //so dentro de um for??
     _pf.JMP(mklbl(_forEnd.top()));
   else
-    std::cerr << "stop instruction can only be used inside a for cycle." << std::endl;
+    std::cerr << "stop instruction can only be used inside a for cycle." << std::endl; */
 }
 
 void l22::postfix_writer::do_block_node(l22::block_node * const node, int lvl) {
@@ -97,7 +97,7 @@ void l22::postfix_writer::do_function_definition_node(l22::function_definition_n
 }
 
 void l22::postfix_writer::do_index_node(l22::index_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS; //será?? nao faco idea
+  /* ASSERT_SAFE_EXPRESSIONS; //será?? nao faco idea
   if (node->base()) {
     node->base()->accept(this, lvl);
   } else {
@@ -110,20 +110,20 @@ void l22::postfix_writer::do_index_node(l22::index_node * const node, int lvl) {
   node->index()->accept(this, lvl);
   _pf.INT(3);
   _pf.SHTL();
-  _pf.ADD(); // add pointer and index 
+  _pf.ADD(); // add pointer and index  */
 }
 
 void l22::postfix_writer::do_null_ptr_node(l22::null_ptr_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS; //talvez nao seja pq diferente no enunciado
+  /* ASSERT_SAFE_EXPRESSIONS; //talvez nao seja pq diferente no enunciado
   if (_inFunctionBody) {
     _pf.INT(0);
   } else {
     _pf.SINT(0);
-  }
+  } */
 }
 
 void l22::postfix_writer::do_stack_alloc_node(l22::stack_alloc_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
+  /* ASSERT_SAFE_EXPRESSIONS;
   node->argument()->accept(this, lvl);
   if(cdk::reference_type::cast(node->type())->referenced()->name() == cdk::TYPE_DOUBLE)
     _pf.INT(3);
@@ -132,7 +132,7 @@ void l22::postfix_writer::do_stack_alloc_node(l22::stack_alloc_node * const node
 
   _pf.SHTL();
   _pf.ALLOC();    
-  _pf.SP();
+  _pf.SP(); */
 }
 
 void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
@@ -140,8 +140,8 @@ void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration
 }
 
 void l22::postfix_writer::do_identity_node(l22::identity_node * const node, int lvl) {
-  ASSERT_SAFE_EXPRESSIONS;
-  node->argument()->accept(this, lvl);
+  /* ASSERT_SAFE_EXPRESSIONS;
+  node->argument()->accept(this, lvl); */
 }
 
 //---------------------------------------------------------------------------
@@ -327,27 +327,50 @@ void l22::postfix_writer::do_evaluation_node(l22::evaluation_node * const node, 
 }
 
 void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
-    ASSERT_SAFE_EXPRESSIONS;
-    //node->arguments()->accept(this, lvl); // determine the value to print
+  ASSERT_SAFE_EXPRESSIONS;
 
-    for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
-        auto child = dynamic_cast<cdk::expression_node *>(node->arguments()->node(ix));
+  std::cout << "            ENTORU           " << std::endl;
 
-        //node->newline();
-        std::shared_ptr<cdk::basic_type> etype = child->type();
-        child->accept(this, lvl);
-        if (child->is_typed(cdk::TYPE_INT)) {
-            _pf.CALL("printi");
-            _pf.TRASH(4); // delete the printed value
-        } else if (child->is_typed(cdk::TYPE_STRING)) {
-            _pf.CALL("prints");
-            _pf.TRASH(4); // delete the printed value's address
-        } else {
-            std::cerr << "ERROR: CANNOT HAPPEN!" << std::endl;
-            exit(1);
-        }
-        _pf.CALL("println"); // print a newline
+  for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
+    cdk::expression_node *child = dynamic_cast<cdk::expression_node*>(node->arguments()->node(ix));
+        std::cout << child->type()<< std::endl;
+
+
+    std::shared_ptr<cdk::basic_type> etype = child->type();
+        std::cout << "            ENTORU foriculo      2     " << std::endl;
+
+    child->accept(this, lvl); // expression to print
+        std::cout << "            ENTORU foriculo      3     " << std::endl;
+    if (child->type() == 0)
+      std::cout << "        yau         " << std::endl;
+
+    if (etype->name() == cdk::TYPE_INT) {
+      std::cout << "entrou inteiro" << std::endl;
+      _functions_to_declare.insert("printi");
+      _pf.CALL("printi");
+      _pf.TRASH(4); // trash int
+    } else if (etype->name() == cdk::TYPE_DOUBLE) {
+      std::cout << "entrou double" << std::endl;
+      _functions_to_declare.insert("printd");
+      _pf.CALL("printd");
+      _pf.TRASH(8); // trash double
+    } else if (etype->name() == cdk::TYPE_STRING) {
+      std::cout << "entrou string" << std::endl;
+      _functions_to_declare.insert("prints");
+      _pf.CALL("prints");
+      _pf.TRASH(4); // trash char pointer
+    } else {
+        std::cout << "            ENTrou else         " << std::endl;
+      std::cerr << "cannot print expression of unknown type" << std::endl;
+      return;
     }
+
+  }
+
+  if (node->newline()) {
+    _functions_to_declare.insert("println");
+    _pf.CALL("println");
+  }
 }
 
 //---------------------------------------------------------------------------

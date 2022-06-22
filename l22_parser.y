@@ -74,7 +74,7 @@
 file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
      | declarations { compiler->ast($$ = new cdk::sequence_node(LINE, $1)); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, $2, $1)); }
-     | program { compiler->ast($$ = new cdk::sequence_node(LINE,$1)); }
+     | program { compiler->ast($1); } //isto isto
      ;
 
 program	: tBEGIN blk tEND { $$ = (new l22::program_node(LINE, $2)); }
@@ -128,14 +128,15 @@ funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::func
 	     ;
 
 expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
-                | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
-     		| 				{ $$ = new cdk::sequence_node(LINE);}
+               | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+     	     | 				{ $$ = new cdk::sequence_node(LINE);}
                 ;
 
 instructions : instruction ';'	     { $$ = new cdk::sequence_node(LINE, $1); }
  		| instruction 	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   | instructions instruction ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
 	   | instructions instruction  { $$ = new cdk::sequence_node(LINE, $2, $1); }
+
 	   ;
 
 instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1); }
@@ -158,7 +159,7 @@ bigif      : tELSE blk                   { $$ = $2; }
             ;
 
 text          : tTEXT                       { $$ = $1; }
-                | text tTEXT                { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
+               | text tTEXT                { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
                 ;
 
 expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
@@ -202,7 +203,7 @@ lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
 blk :	'{' instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
     |	 '{' declarations instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
     | '{' declarations '}' 	{ $$ = new l22::block_node(LINE, $2, nullptr);}
-    | '{' '}' 			{ $$ = new l22::block_node(LINE, nullptr, nullptr);}
+     | '{'  '}' 			{ $$ = new l22::block_node(LINE, nullptr, nullptr);} //checkiii
     ;
 
 %%
