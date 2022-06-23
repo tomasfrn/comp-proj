@@ -36,6 +36,14 @@ inline bool valid(int indent) {
 
 SPACE     [ ]
 %x X_STRING X_SPECIALSTRING X_COMMENT X_NEWLINE
+
+DIGIT                [0-9]
+EXPONENT             [eE][-+]?{DIGIT}+
+REAL				 {DIGIT}+{EXPONENT}|({DIGIT}+"."{DIGIT}*|{DIGIT}*"."{DIGIT}+){EXPONENT}?
+B10_INT              [1-9]{DIGIT}*|0
+B7_INT               0[0-6]+
+
+
 %%
   yydebug=1; set_debug(1);
 
@@ -203,21 +211,25 @@ SPACE     [ ]
 
   /*------INTEIROS------*/
 
-0[0-6]+              yylval.i = strtoul(yytext, NULL, 7); return tINTEGER;
+{B7_INT}              {yylval.i = strtoul(yytext, NULL, 7); if(errno == ERANGE) yyerror("Overflow..."); return tINTEGER;}
+
 0[0-9]+              yyerror("Invalid base 7 number.");
 
-0|[1-9][0-9]*        yylval.i = strtoul(yytext, NULL, 10); return tINTEGER;
+{B10_INT}        {yylval.i = strtoul(yytext, NULL, 10); return tINTEGER; if(errno == ERANGE) yyerror("Overflow..."); return tINTEGER;}
+
 
   /*------REAIS------*/
 
-([0-9]*\.[0-9]+|[0-9]+\.[0-9])([Ee]([-+])?[0-9]+)? { yylval.d = strtod(yytext, NULL); return tDOUBLE; }
+
+
+{REAL}               { yylval.d = strtod(yytext, nullptr);	if(errno == ERANGE) yyerror("Overflow..."); return tDOUBLE;}
 
 
   /*------OUTROS------*/
 
 [-?()<>=+*/%;:{},@.\[\]]       return *yytext;
 
-[ ]                /* ignore whitespace */
+[ ]               ; /* ignore whitespace */
 
 <<EOF>>               return 0;
 

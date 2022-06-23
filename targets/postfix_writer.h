@@ -21,6 +21,8 @@ namespace l22 {
     bool _inFunctionArgs = false;
     std::shared_ptr<l22::symbol> _function;
     std::set<std::string> _functions_to_declare;
+    int _offset = 0;
+    bool _errors = false;
 
 
 

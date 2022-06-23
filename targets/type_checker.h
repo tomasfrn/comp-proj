@@ -58,7 +58,7 @@ namespace l22 {
 //---------------------------------------------------------------------------
 //     HELPER MACRO FOR TYPE CHECKING
 //---------------------------------------------------------------------------
-
+// TODO
 #define CHECK_TYPES(compiler, symtab, node) { \
   try { \
     l22::type_checker checker(compiler, symtab, this); \
