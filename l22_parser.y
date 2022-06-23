@@ -43,7 +43,6 @@
 %token <i> tINTEGER
 %token <s> tIDENTIFIER tTEXT
 %token <d> tDOUBLE
-
 %token tWHILE tIF tWRITE tWRITELN tINPUT tBEGIN tEND tAGAIN tSTOP tRETURN tTHEN tDO tELIF tSIZEOF tRETURNS tNULL tTYPE_INT tTYPE_DOUBLE
 
 %nonassoc tIFX
@@ -55,12 +54,12 @@
 %left '*' '/' '%' tAND tOR
 %nonassoc tUNARY
 
-%type <node> instruction program vardeclaration bigif func_input
-%type <sequence> instructions file expressions declarations variables fun_expr
+%type <node> instruction program vardeclaration bigif
+%type <sequence> instructions file expressions declarations variables
 %type <expression> expr opt_initializer funcdef
 %type <lvalue> lval
 %type <block> blk
-//%type <i> var
+%type <i> var
 %type <s> text
 %type <vector> data_types
 
@@ -73,17 +72,11 @@
 file : /* empty */ { compiler->ast ($$ = new cdk::sequence_node(LINE)); }
      | declarations { compiler->ast($$ = new cdk::sequence_node(LINE, $1)); }
      | declarations program { compiler-> ast( $$ = new cdk::sequence_node(LINE, $2, $1)); }
-     | program { compiler->ast($1); } //isto isto
+     | program { compiler->ast($1); }
      ;
 
 program	: tBEGIN blk tEND { $$ = (new l22::program_node(LINE, $2)); }
 	;
-
-blk :	'{' instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
-    |	 '{' declarations instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
-    | '{' declarations '}' 	{ $$ = new l22::block_node(LINE, $2, nullptr);}
-     | '{'  '}' 			{ $$ = new l22::block_node(LINE, nullptr, nullptr);} //checkiii
-    ;
 
 declarations : vardeclaration { $$ = new cdk::sequence_node(LINE, $1);     }
  		| vardeclaration ';'{ $$ = new cdk::sequence_node(LINE, $1);     }
@@ -94,25 +87,21 @@ declarations : vardeclaration { $$ = new cdk::sequence_node(LINE, $1);     }
 opt_initializer  : /* empty */         { $$ = nullptr; /* must be nullptr, not NIL */ }
                  | '=' expr      { $$ = $2; }
                  ;
-// TODO aqui
+
 vardeclaration :	 data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, $3); delete $2;}
 	       | tPUBLIC data_type tIDENTIFIER opt_initializer	{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, $2, *$3, $4); delete $3; }
 	       | tUSE    data_type tIDENTIFIER 	{ $$ = new l22::variable_declaration_node(LINE, tUSE, $2, *$3, nullptr); delete $3;}
 	       | tFOREIGN data_type tIDENTIFIER 	{ $$ = new l22::variable_declaration_node(LINE, tFOREIGN, $2, *$3, nullptr); delete $3;}
-	       | 	  tVAR 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4); delete $2;}
-	       | tPUBLIC  tVAR 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
+	       | 	  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPRIVATE, nullptr, *$2, $4); delete $2;}
+	       | tPUBLIC  var 	tIDENTIFIER '=' expr 		{ $$ = new l22::variable_declaration_node(LINE, tPUBLIC, nullptr, *$3, $5); delete $3;}
 	       ;
 
-//var            : tVAR         { $$ = tVAR; }
-//               |              { $$ = '\0'; }
-//               ;
+var            : tVAR         { $$ = tVAR; }
+               |              { $$ = '\0'; }
+               ;
 
-func_input : data_type tIDENTIFIER    { $$ = new l22::variable_declaration_node(LINE, tPRIVATE, $1, *$2, nullptr); delete $2; }
-	   ;
-
-variables  : /* empty */         		{ $$ = nullptr;  }
-	   | func_input			{ $$ = new cdk::sequence_node(LINE, $1);}
-	   | variables ',' func_input	{ $$ = new cdk::sequence_node(LINE, $3, $1);}
+variables  : vardeclaration			{ $$ = new cdk::sequence_node(LINE, $1);}
+	   | variables ',' vardeclaration	{ $$ = new cdk::sequence_node(LINE, $3, $1);}
 	   ;
 
 
@@ -124,7 +113,7 @@ data_type    : tTYPE_STRING                     { $$ = cdk::primitive_type::crea
 	     | funct_type			{ $$ = $1;}
              ;
 
-data_types : /* vazio */                     { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); $$->push_back(cdk::primitive_type::create(0, cdk::TYPE_VOID));}
+data_types : /* vazio */                     { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); }
            | data_type                       { $$ = new std::vector<std::shared_ptr<cdk::basic_type>>(); $$->push_back($1); }
            | data_types ',' data_type        { $$ = $1; $$->push_back($3); }
 
@@ -133,18 +122,18 @@ funct_type    : data_type '<' data_types '>'	{ $$ = cdk::functional_type::create
 	     ;
 
 funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, $2, $5, $7);}
+	     | '('  ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, nullptr, $4, $6);}
 	     ;
 
 expressions     : expr                     { $$ = new cdk::sequence_node(LINE, $1);     }
-               | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
-//     	     | 				{ $$ = new cdk::sequence_node(LINE);}
+                | expressions ',' expr     	   { $$ = new cdk::sequence_node(LINE, $3, $1); }
+     		| 				{ $$ = new cdk::sequence_node(LINE);}
                 ;
 
 instructions : instruction ';'	     { $$ = new cdk::sequence_node(LINE, $1); }
  		| instruction 	     { $$ = new cdk::sequence_node(LINE, $1); }
 	   | instructions instruction ';' { $$ = new cdk::sequence_node(LINE, $2, $1); }
 	   | instructions instruction  { $$ = new cdk::sequence_node(LINE, $2, $1); }
-
 	   ;
 
 instruction : expr                      { $$ = new l22::evaluation_node(LINE, $1); }
@@ -167,7 +156,7 @@ bigif      : tELSE blk                   { $$ = $2; }
             ;
 
 text          : tTEXT                       { $$ = $1; }
-               | text tTEXT                { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
+                | text tTEXT                { $$ = new std::string(*$1 + *$2); delete $1; delete $2; }
                 ;
 
 expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
@@ -198,18 +187,19 @@ expr : tINTEGER                { $$ = new cdk::integer_node(LINE, $1); }
      | lval                    { $$ = new cdk::rvalue_node(LINE, $1); }
      | lval '=' expr           { $$ = new cdk::assignment_node(LINE, $1, $3); }
      | '[' expr ']' 	{ $$ = new l22::stack_alloc_node(LINE, $2);}
-     | '[' expr ']' '(' expressions ')' { $$ = new l22::function_call_node(LINE, $2, $5);}
-     | '@' '(' fun_expr ')'	{ $$ = new l22::function_call_node(LINE, nullptr, $3);}
-
+     | expr '(' expressions ')' { $$ = new l22::function_call_node(LINE, $1, $3);}
+     | '@' '(' expressions ')'	   { $$ = new l22::function_call_node(LINE, $3);}
+     | '(' expr ')' '(' expressions ')' { $$ = new l22::function_call_node(LINE, $2, $5);}
      ;
-fun_expr : /*empty*/		{ new cdk::sequence_node(LINE);}
-	| expressions		{ $$ = $1;}
 
 lval : tIDENTIFIER             { $$ = new cdk::variable_node(LINE, $1); }
      | lval '[' expr ']'      { $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE, $1), $3); }
-     | lval '(' ')'	{ $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE,$1), nullptr); }
-     | lval '(' expr ')'	{ $$ = new l22::index_node(LINE, new cdk::rvalue_node(LINE,$1), $3); }
-
      ;
+
+blk :	'{' instructions '}' { $$ = new l22::block_node(LINE, nullptr, $2);}
+    |	 '{' declarations instructions '}' { $$ = new l22::block_node(LINE, $2, $3);}
+    | '{' declarations '}' 	{ $$ = new l22::block_node(LINE, $2, nullptr);}
+    | '{' '}' 			{ $$ = new l22::block_node(LINE, nullptr, nullptr);}
+    ;
 
 %%
