@@ -120,7 +120,7 @@ data_types : /* vazio */                     { $$ = new std::vector<std::shared_
 
 funct_type    : data_type '<' data_types '>'	{ $$ = cdk::functional_type::create(*$3, $1); }
 	     ;
-
+// passar functional type
 funcdef      : '(' variables ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, $2, $5, $7);}
 	     | '('  ')' tRETURNS data_type ':' blk { $$ = new l22::function_definition_node(LINE, nullptr, $4, $6);}
 	     ;

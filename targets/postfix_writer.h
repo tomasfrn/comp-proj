@@ -20,9 +20,17 @@ namespace l22 {
     bool _inFunctionBody = false;
     bool _inFunctionArgs = false;
     std::shared_ptr<l22::symbol> _function;
+      std::vector<std::string> _next;
+      std::vector<std::string> _stop;
     std::set<std::string> _functions_to_declare;
     int _offset = 0;
     bool _errors = false;
+      bool _newRetValSeen; // function_name = value; seen in body of function
+      bool _specialVarSeen; // function_name seen as var name
+    // remember function name for resolving '@'
+    std::string _currentFunctionName;
+    std::string _currentReturnJumpLabel; // where to jump when on return
+    std::stack<l22::symbol> stackNova;
 
 
 

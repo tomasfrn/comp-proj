@@ -155,8 +155,9 @@ void l22::type_checker::do_stop_node(l22::stop_node *const node, int lvl) {
 }
 
 void l22::type_checker::do_block_node(l22::block_node * const node, int lvl) {
-    if (node->declarations())
+    if (node->declarations()){
         node->declarations()->accept(this, lvl + 2);
+    }
 
     if (node->instructions())
         node->instructions()->accept(this, lvl + 2);
@@ -233,19 +234,23 @@ void l22::type_checker::do_stack_alloc_node(l22::stack_alloc_node * const node, 
     node->type(cdk::primitive_type::create(0, cdk::TYPE_UNSPEC));
 }
 
-// certo!
 void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
     // TODO use
     // var
 
     if(node->type() == nullptr) {
-        if (node->initializer() != nullptr)
+        if (node->initializer() != nullptr) {
+            node->initializer()->accept(this, lvl + 2);
             node->type(node->initializer()->type());
+        }
         else
             throw std::string("Type not defined");
     }
+    // tipo do initializer não e null
+
     // quando o initializer existe
-    else if (node->initializer() != nullptr) {
+    if (node->initializer() != nullptr) {
+
         node->initializer()->accept(this, lvl + 2);
 
         // se for do tipo unspec
@@ -269,22 +274,22 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
                 throw std::string("Unknown node with unspecified type.");
         }
 
-        // é do tipo int
+            // é do tipo int
         else if (node->is_typed(cdk::TYPE_INT)) {
             if (!node->initializer()->is_typed(cdk::TYPE_INT))
                 throw std::string("Wrong type for initializer (integer expected).");
         }
-        // é do tipo double
+            // é do tipo double
         else if (node->is_typed(cdk::TYPE_DOUBLE)) {
             if (!node->initializer()->is_typed(cdk::TYPE_DOUBLE) && !node->initializer()->is_typed(cdk::TYPE_INT))
                 throw std::string("Wrong type for initializer (integer or double expected).");
         }
-        // é do tipo string
+            // é do tipo string
         else if (node->is_typed(cdk::TYPE_STRING)) {
             if (!node->initializer()->is_typed(cdk::TYPE_STRING))
                 throw std::string("Wrong type for initializer (string expected).");
         }
-        // é do tipo pointer
+            // é do tipo pointer
         else if (node->is_typed(cdk::TYPE_POINTER)) {
             if (!node->initializer()->is_typed(cdk::TYPE_POINTER))
                 throw std::string("Wrong type for initializer (pointer expected).");
@@ -295,7 +300,7 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
                 throw std::string("Wrong type for initializer (functional expected).");
 
             //int<int> x = (text) -> int :
-             //               hil
+            //               hil
 
             std::shared_ptr<cdk::functional_type> node_type = cdk::functional_type::cast(node->type());
             std::shared_ptr<cdk::functional_type> init_type = cdk::functional_type::cast(node->initializer()->type());
@@ -329,11 +334,11 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
         if (!node->is_typed(cdk::TYPE_FUNCTIONAL)) {
             const std::string &id = node->identifier();
             std::shared_ptr<l22::symbol> symbol = std::make_shared<l22::symbol>(node->qualifier(),
-                                                                              node->type(),
-                                                                              id,
-                                                                              false,
-                                                                              0,
-                                                                              false);
+                                                                                node->type(),
+                                                                                id,
+                                                                                false,
+                                                                                0,
+                                                                                false);
 
             if (_symtab.insert(id, symbol))
                 _parent->set_new_symbol(symbol);
@@ -343,8 +348,17 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
         else
             throw std::string("Unknown type for variable initializer.");
     }
-    std::cout << "            ENTROU222           " << std::endl;
-
+    const std::string &id = node->identifier();
+    std::shared_ptr<l22::symbol> symbol = std::make_shared<l22::symbol>(node->qualifier(),
+                                                                        node->type(),
+                                                                        id,
+                                                                        true,
+                                                                        0,
+                                                                        false);
+    if (_symtab.insert(id, symbol))
+        _parent->set_new_symbol(symbol);
+    else
+        throw std::string("Variable '" + id + "' has been redeclared.");
 }
 
 
@@ -566,7 +580,7 @@ void l22::type_checker::do_variable_node(cdk::variable_node *const node, int lvl
       std::cout << symbol->value() << "ESTE0" << std::endl;
       node->type(symbol->type());
   } else {
-      throw "undeclared variable '" + id + "'";
+      throw "undeclared variable ?? '" + id + "'";
   }
 }
 
