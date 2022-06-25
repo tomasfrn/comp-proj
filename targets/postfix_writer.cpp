@@ -59,8 +59,7 @@ void l22::postfix_writer::do_address_of_node(l22::address_of_node * const node, 
 }
 
 void l22::postfix_writer::do_sizeof_node(l22::sizeof_node * const node, int lvl) {
-    ASSERT_SAFE_EXPRESSIONS //copiei de cima pq parece a mma vibe
-    node->argument()->accept(this, lvl);
+    _pf.INT(node->argument()->type()->size());
 }
 
 void l22::postfix_writer::do_again_node(l22::again_node * const node, int lvl) {
@@ -87,15 +86,10 @@ void l22::postfix_writer::do_stop_node(l22::stop_node * const node, int lvl) {
 
 void l22::postfix_writer::do_block_node(l22::block_node * const node, int lvl) {
     //_symtab.push(); // for block-local vars SIM OU NAO?
-    std::cout << node->instructions() << std::endl;
-    if (node->declarations() == nullptr)
-        std::cout << node->declarations() << std::endl;
-
     if (node->declarations())
         node->declarations()->accept(this, lvl + 2);
     if (node->instructions())
         node->instructions()->accept(this, lvl + 2);
-    std::cout << "           saiu blocknode     " << std::endl;
 
     //_symtab.pop();
 }
@@ -237,14 +231,10 @@ void l22::postfix_writer::do_stack_alloc_node(l22::stack_alloc_node * const node
 
 void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
     ASSERT_SAFE_EXPRESSIONS;
-    std::cout << "            ENTROU  vardeclnode         " << std::endl;
 
     auto id = node->identifier();
 
     std::cout << "INITIAL OFFSET: " << _offset << std::endl;
-
-    if (node->type() == nullptr)
-        std::cout << "           aqui    " << std::endl;
 
     // type size?
     int offset = 0, typesize = node->type()->size(); // in bytes
@@ -313,7 +303,6 @@ void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration
                     } else if (node->is_typed(cdk::TYPE_DOUBLE)) {
                         if (node->initializer()->is_typed(cdk::TYPE_DOUBLE)) {
                             // entra aqui mas da seg fault
-                            std::cout << node->initializer() << std::endl;
 
 //                            node->initializer()->accept(this, lvl);
 
@@ -352,7 +341,6 @@ void l22::postfix_writer::do_variable_declaration_node(l22::variable_declaration
 
         }
     }
-    std::cout << "            ENTROU 2          " << std::endl;
 
 }
 
@@ -372,21 +360,29 @@ void l22::postfix_writer::do_sequence_node(cdk::sequence_node * const node, int 
 //---------------------------------------------------------------------------
 
 void l22::postfix_writer::do_integer_node(cdk::integer_node * const node, int lvl) {
-    _pf.INT(node->value()); // push an integer
-}
+    if(_inFunctionBody)
+        _pf.INT(node->value());
+    else
+        _pf.SINT(node->value());}
 
 void l22::postfix_writer::do_string_node(cdk::string_node * const node, int lvl) {
     int lbl1;
 
-//    generate the string
-    _pf.RODATA(); // strings are DATA readonly
-    _pf.ALIGN(); // make sure we are aligned
-    _pf.LABEL(mklbl(lbl1 = ++_lbl)); // give the string a name
-    _pf.SSTRING(node->value()); // output string characters
+    _pf.RODATA();
+    _pf.ALIGN();
+    _pf.LABEL(mklbl(lbl1 = ++_lbl));
+    _pf.SSTRING(node->value());
 
-//    leave the address on the stack
-    _pf.TEXT(); // return to the TEXT segment
-    _pf.ADDR(mklbl(lbl1)); // the string to be printed
+    _pf.ALIGN();
+    if (_inFunctionBody) {
+        _pf.TEXT();
+        _pf.ADDR(mklbl(lbl1));
+    }
+    else
+    {
+        _pf.DATA();
+        _pf.SADDR(mklbl(lbl1));
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -432,7 +428,19 @@ void l22::postfix_writer::do_mod_node(cdk::mod_node * const node, int lvl) {
 void l22::postfix_writer::do_lt_node(cdk::lt_node * const node, int lvl) {
     ASSERT_SAFE_EXPRESSIONS;
     node->left()->accept(this, lvl);
+    if(node->right()->is_typed(cdk::TYPE_DOUBLE) && node->left()->is_typed(cdk::TYPE_INT)) {
+        _pf.I2D();
+    }
+
     node->right()->accept(this, lvl);
+    if(node->left()->is_typed(cdk::TYPE_DOUBLE) && node->right()->is_typed(cdk::TYPE_INT)) {
+        _pf.I2D();
+    }
+    if(node->left()->is_typed(cdk::TYPE_DOUBLE) || node->right()->is_typed(cdk::TYPE_DOUBLE))
+    {
+        _pf.DCMP();
+        _pf.INT(0);
+    }
     _pf.LT();
 }
 void l22::postfix_writer::do_le_node(cdk::le_node * const node, int lvl) {
@@ -513,8 +521,9 @@ void l22::postfix_writer::do_program_node(l22::program_node * const node, int lv
     _pf.LABEL("_main");
     _pf.ENTER(0);  // Simple doesn't implement local variables
 
+    _inFunctionBody = true;
     node->statements()->accept(this, lvl);
-
+    _inFunctionBody = false;
     // end the main function
     _pf.INT(0);
     _pf.STFVAL32();
@@ -546,38 +555,28 @@ void l22::postfix_writer::do_evaluation_node(l22::evaluation_node * const node, 
 void l22::postfix_writer::do_write_node(l22::write_node * const node, int lvl) {
     ASSERT_SAFE_EXPRESSIONS;
 
-    std::cout << "            ENTROU    write       " << std::endl;
 
     for (size_t ix = 0; ix < node->arguments()->size(); ix++) {
         cdk::expression_node *child = dynamic_cast<cdk::expression_node*>(node->arguments()->node(ix));
-        std::cout << child->type()<< std::endl;
 
 
         std::shared_ptr<cdk::basic_type> etype = child->type();
-        std::cout << "            ENTORU foriculo      2     " << std::endl;
 
         child->accept(this, lvl); // expression to print
-        std::cout << "            ENTORU foriculo      3     " << std::endl;
-        if (child->type() == 0) //ta null
-            std::cout << "        yau ta nullzord       " << std::endl;
 
         if (etype->name() == cdk::TYPE_INT) {
-            std::cout << "entrou inteiro" << std::endl;
             _functions_to_declare.insert("printi");
             _pf.CALL("printi");
             _pf.TRASH(4); // trash int
         } else if (etype->name() == cdk::TYPE_DOUBLE) {
-            std::cout << "entrou double" << std::endl;
             _functions_to_declare.insert("printd");
             _pf.CALL("printd");
             _pf.TRASH(8); // trash double
         } else if (etype->name() == cdk::TYPE_STRING) {
-            std::cout << "entrou string" << std::endl;
             _functions_to_declare.insert("prints");
             _pf.CALL("prints");
             _pf.TRASH(4); // trash char pointer
         } else {
-            std::cout << "            ENTROU else         " << std::endl;
             std::cerr << "cannot print expression of unknown type" << std::endl;
             return;
         }

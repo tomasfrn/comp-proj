@@ -9,15 +9,6 @@
 //---------------------------------------------------------------------------
 
 void l22::type_checker::do_sequence_node(cdk::sequence_node *const node, int lvl) {
-//    for(size_t i = 0; i < node->size(); i++) {
-//        node->node(i)->accept(this, lvl + 2);
-//        cdk::expression_node *expression = dynamic_cast<cdk::expression_node *>(node->node(i));
-//        if(expression != nullptr && expression->is_typed(cdk::TYPE_UNSPEC)) {
-//            // TODO ver condicao do OG
-//            l22::input_node *input = dynamic_cast<l22::input_node*>(expression);
-//            input->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
-//        }
-//    }
     auto symbol = new_symbol();
     for (size_t i = 0; i < node->size(); i++)
         node->node(i)->accept(this, lvl);
@@ -88,7 +79,6 @@ void l22::type_checker::do_again_node(l22::again_node *const node, int lvl) {
 }
 
 void l22::type_checker::do_return_node(l22::return_node *const node, int lvl) {
-//    TODO checkar se isto esta bem e faz sentido
     if (node->retval()) {
         if (_function->type() != nullptr && _function->is_typed(cdk::TYPE_VOID)) throw std::string(
                     "initializer specified for void function.");
@@ -192,11 +182,10 @@ void l22::type_checker::do_function_call_node(l22::function_call_node * const no
 void l22::type_checker::do_function_definition_node(l22::function_definition_node * const node, int lvl) {
     // Empty
 }
-// TODO ver isto
+
 void l22::type_checker::do_index_node(l22::index_node * const node, int lvl) {
     ASSERT_UNSPEC;
     std::shared_ptr < cdk::reference_type > btype;
-    // TODO não e possivel indexar ponteiros que designem funcoes
     if (node->base()) {
         node->base()->accept(this, lvl + 2);
         btype = cdk::reference_type::cast(node->base()->type());
@@ -216,7 +205,6 @@ void l22::type_checker::do_null_ptr_node(l22::null_ptr_node * const node, int lv
     ASSERT_UNSPEC;
     node->type(cdk::reference_type::create(4, nullptr));
 }
-// TODO leicmyballs
 void l22::type_checker::do_stack_alloc_node(l22::stack_alloc_node * const node, int lvl) {
     ASSERT_UNSPEC;
     node->argument()->accept(this, lvl + 2);
@@ -235,20 +223,33 @@ void l22::type_checker::do_stack_alloc_node(l22::stack_alloc_node * const node, 
 }
 
 void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_node * const node, int lvl) {
-    // TODO use
     // var
-
+    // var i
     if(node->type() == nullptr) {
+        // var i = 1
+        std::shared_ptr<l22::symbol> symbol;
+
         if (node->initializer() != nullptr) {
             node->initializer()->accept(this, lvl + 2);
             node->type(node->initializer()->type());
+            symbol = std::make_shared<l22::symbol>(node->qualifier(),
+                                                   node->type(),
+                                                   node->identifier(),
+                                                   false,
+                                                   0,
+                                                   false);
+            if (_symtab.insert(node->identifier(), symbol))
+                _parent->set_new_symbol(symbol);
+            else
+                throw std::string("Variable '" + node->identifier() + "' has been redeclared.");
         }
         else
             throw std::string("Type not defined");
     }
     // tipo do initializer não e null
-
+    // int i
     // quando o initializer existe
+    // int = 1, var i = 1
     if (node->initializer() != nullptr) {
 
         node->initializer()->accept(this, lvl + 2);
@@ -299,9 +300,6 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
             if (!node->initializer()->is_typed(cdk::TYPE_FUNCTIONAL))
                 throw std::string("Wrong type for initializer (functional expected).");
 
-            //int<int> x = (text) -> int :
-            //               hil
-
             std::shared_ptr<cdk::functional_type> node_type = cdk::functional_type::cast(node->type());
             std::shared_ptr<cdk::functional_type> init_type = cdk::functional_type::cast(node->initializer()->type());
 
@@ -348,17 +346,19 @@ void l22::type_checker::do_variable_declaration_node(l22::variable_declaration_n
         else
             throw std::string("Unknown type for variable initializer.");
     }
-    const std::string &id = node->identifier();
-    std::shared_ptr<l22::symbol> symbol = std::make_shared<l22::symbol>(node->qualifier(),
-                                                                        node->type(),
-                                                                        id,
-                                                                        true,
-                                                                        0,
-                                                                        false);
-    if (_symtab.insert(id, symbol))
-        _parent->set_new_symbol(symbol);
-    else
-        throw std::string("Variable '" + id + "' has been redeclared.");
+    else if (node->type() != nullptr && node->initializer() == nullptr) {
+        const std::string &id = node->identifier();
+        std::shared_ptr<l22::symbol> symbol = std::make_shared<l22::symbol>(node->qualifier(),
+                                                                            node->type(),
+                                                                            id,
+                                                                            false,
+                                                                            0,
+                                                                            false);
+        if (_symtab.insert(id, symbol))
+            _parent->set_new_symbol(symbol);
+        else
+            throw std::string("Variable '" + id + "' has been redeclared.");
+    }
 }
 
 
@@ -405,19 +405,6 @@ void l22::type_checker::do_neg_node(cdk::neg_node *const node, int lvl) {
 }
 
 //---------------------------------------------------------------------------
-
-// TODO checkar para ver se isto se aplica
-//void l22::type_checker::processBinaryExpression(cdk::binary_operation_node *const node, int lvl) {
-//  ASSERT_UNSPEC;
-//  node->left()->accept(this, lvl + 2);
-//  if (!node->left()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in left argument of binary expression");
-//
-//  node->right()->accept(this, lvl + 2);
-//  if (!node->right()->is_typed(cdk::TYPE_INT)) throw std::string("wrong type in right argument of binary expression");
-//
-//   in Simple, expressions are always int
-//  node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
-//}
 
 void l22::type_checker::do_add_node(cdk::add_node *const node, int lvl) {
     ASSERT_UNSPEC;
@@ -574,10 +561,8 @@ void l22::type_checker::do_variable_node(cdk::variable_node *const node, int lvl
   ASSERT_UNSPEC;
   const std::string &id = node->name();
   std::shared_ptr<l22::symbol> symbol = _symtab.find(id);
-    std::cout << symbol << std::endl;
 
   if (symbol != nullptr) {
-      std::cout << symbol->value() << "ESTE0" << std::endl;
       node->type(symbol->type());
   } else {
       throw "undeclared variable ?? '" + id + "'";
@@ -637,8 +622,6 @@ void l22::type_checker::do_assignment_node(cdk::assignment_node *const node, int
             typeOfPointer(cdk::reference_type::cast(node->lvalue()->type()), cdk::reference_type::cast(node->rvalue()->type()));
         node->type(node->lvalue()->type());
     }
-    else if(node->lvalue()->is_typed(cdk::TYPE_STRUCT) && node->rvalue()->is_typed(cdk::TYPE_STRUCT))
-        throw std::string("Cheguei");
     else {
         throw std::string("wrong types in assignment");
     }
@@ -700,7 +683,6 @@ void l22::type_checker::do_if_else_node(l22::if_else_node *const node, int lvl) 
 }
 //----------------------------------------------------------------------------
 
-// TODO leicmybox
 void l22::type_checker::do_IntOnlyExpression(cdk::binary_operation_node *const node, int lvl) {
     ASSERT_UNSPEC;
     node->left()->accept(this, lvl + 2);
@@ -728,7 +710,6 @@ void l22::type_checker::do_IntOnlyExpression(cdk::binary_operation_node *const n
     else
         throw std::string("Integer expression expected in (left and right) binary operators.");
 }
-// TODO professor
 void l22::type_checker::do_IDExpression(cdk::binary_operation_node *const node, int lvl) {
     ASSERT_UNSPEC;
     node->left()->accept(this, lvl + 2);
@@ -778,7 +759,6 @@ void l22::type_checker::do_IDExpression(cdk::binary_operation_node *const node, 
         throw std::string("Wrong types in binary expression.");
 }
 
-// TODO leicmyballs
 void l22::type_checker::do_ScalarLogicalExpression(cdk::binary_operation_node *const node, int lvl) {
     ASSERT_UNSPEC;
     node->left()->accept(this, lvl + 2);
@@ -808,7 +788,6 @@ void l22::type_checker::do_ScalarLogicalExpression(cdk::binary_operation_node *c
 
     node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
 }
-// TODO leimyballs
 void l22::type_checker::do_BooleanLogicalExpression(cdk::binary_operation_node *const node, int lvl) {
     ASSERT_UNSPEC;
     node->left()->accept(this, lvl + 2);
@@ -839,7 +818,6 @@ void l22::type_checker::do_BooleanLogicalExpression(cdk::binary_operation_node *
     node->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
 }
 
-// TODO leicmyballs
 void l22::type_checker::do_GeneralLogicalExpression(cdk::binary_operation_node *const node, int lvl) {
 
     ASSERT_UNSPEC;
